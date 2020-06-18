@@ -25,11 +25,12 @@ sig ParameterDecl {
 
 fact ParameterFunction {
 	all f: FunctionDecl, p: f.parameters | p.function = f
+	all p: ParameterDecl, f: p.function | p in f.parameters
 	-- `function` is the inverse of `parameters`
 }
 
 fact FunctionParameter {
-	all p: ParameterDecl, f: p.function | p in f.parameters
+	
 }
 
 -- Types
