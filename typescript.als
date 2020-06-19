@@ -44,5 +44,6 @@ one sig TString extends PrimType {}
 
 -- Testing
 pred show {}
-run show for 3 but exactly 1 FunctionDecl, exactly 2 ParameterDecl, exactly 2 Identifier
+//run show for 3 but exactly 1 FunctionDecl, exactly 2 ParameterDecl, exactly 2 Identifier
+run show for 2 but exactly 2 ParameterDecl
 
