@@ -63,3 +63,6 @@ hs_err_pid*
 # .idea/modules
 # *.iml
 # *.ipr
+
+!libs/*
+!gradle/wrapper/*
