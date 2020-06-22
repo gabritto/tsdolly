@@ -1,5 +1,7 @@
 package tsdolly;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.translator.A4Solution;
@@ -7,6 +9,8 @@ import edu.mit.csail.sdg.translator.A4Tuple;
 
 import java.util.*;
 import tsdolly.Util;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.HashMultimap;
 
@@ -20,38 +24,15 @@ public class Program {
                 ", relations=" + relations +
                 '}';
     }
-//    private class SigInstance {
-//        final String sig;
-//        final String id;
-//
-//        private SigInstance(String sig, String id) {
-//            this.sig = sig;
-//            this.id = id;
-//        }
-//
-//        public SigInstance(String sig, A4Tuple sigInstance) {
-//            this(sig, sigInstance.toString()); // TODO: prettify instance name
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            if (this == o) return true;
-//            if (o == null || getClass() != o.getClass()) return false;
-//            SigInstance that = (SigInstance) o;
-//            return Objects.equals(sig, that.sig) &&
-//                    Objects.equals(id, that.id);
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return Objects.hash(sig, id);
-//        }
-//    }
 
     private class Id {
         public final String id;
         public Id(String id) {
             this.id = id;
+        }
+
+        public JsonElement toJson() {
+            return new JsonPrimitive(this.id);
         }
 
         @Override
@@ -73,10 +54,11 @@ public class Program {
         }
     }
 
-    private final Multimap<Sig, Id> sigToObjects; // Maps a sig name to its instances
+    private final Multimap<Sig, Id> sigToObjects; // Maps a sig to its instances
     private final Map<Id, Sig> objectToSig;
-    private final Multimap<Sig, Field> sigFields; // Maps a sig name to its fields
+    private final Multimap<Sig, Field> sigFields; // Maps a sig to its fields
     private final Map<Field, Multimap<Id, Id>> relations; // Maps a relation (field) to its members
+    private final Id programId; // TODO: is this ok? Can we assume we are generating 1 program per Alloy solution?
 
     public Program(A4Solution solution) {
         assert solution.satisfiable() : solution;
@@ -84,9 +66,8 @@ public class Program {
         this.objectToSig = new HashMap<>();
         this.sigFields = HashMultimap.create();
         this.relations = new HashMap<>();
-        for (Sig sig: solution.getAllReachableSigs()) { // TODO: filter by user-defined sigs.
-            for (Iterator<A4Tuple> sigTuples = solution.eval(sig).iterator(); sigTuples.hasNext(); ) {
-                A4Tuple sigTuple = sigTuples.next();
+        for (Sig sig : solution.getAllReachableSigs()) { // TODO: filter by user-defined sigs?.
+            for (final A4Tuple sigTuple : solution.eval(sig)) {
                 final var instanceId = new Id(Util.sigInstanceId(sigTuple));
                 assert !this.objectToSig.containsKey(instanceId);
                 this.objectToSig.put(instanceId, sig);
@@ -100,13 +81,56 @@ public class Program {
 
         for (Field field: this.sigFields.values()) {
             final Multimap<Id, Id> fieldMap = HashMultimap.create();
-            for (Iterator<A4Tuple> fieldTuples = solution.eval(field).iterator(); fieldTuples.hasNext(); ) {
-                final var fieldTuple = fieldTuples.next();
+            for (final A4Tuple fieldTuple : solution.eval(field)) {
                 final var instanceNames = Util.fieldEntry(fieldTuple);
                 fieldMap.put(new Id(instanceNames.fst), new Id(instanceNames.snd));
             }
             this.relations.put(field, fieldMap);
         }
+
+        Sig programSig = Util.getProgramSig(solution.getAllReachableSigs());
+        var programs = this.sigToObjects.get(programSig);
+        if (programs == null || programs.size() != 1) {
+            final int programCount = programs == null ? 0 : programs.size();
+            throw new IllegalArgumentException("Expected solution to have a single instance of type`Program`," +
+                " instead found " + programCount);
+        }
+        this.programId = programs.iterator().next();
+    }
+
+    public JsonElement toJson() {
+        var programSig = this.objectToSig.get(this.programId);
+        return parseObject(programSig, this.programId);
+    }
+
+    public JsonElement parseObject(Sig sig, Id objectId) {
+        var json = new JsonObject();
+        json.add(Util.ID_FIELD, objectId.toJson());
+        json.add(Util.TYPE_FIELD, Util.sigToJson(sig));
+        var fields = this.sigFields.get(sig);
+        for (Field field: fields) {
+            var members = this.relations.get(field).get(objectId);
+            // There are 3 possibilities: no members, one member, more than one member.
+            if (members == null || members.isEmpty()) {
+                continue;
+            }
+            else if (members.size() == 1) {
+                Id memberId = members.iterator().next();
+                var memberSig = this.objectToSig.get(memberId);
+                var memberJson = parseObject(memberSig, memberId);
+                json.add(Util.fieldName(field), memberJson);
+            }
+            else {
+                var membersJson = new JsonArray();
+                for (Id memberId : members) {
+                    var memberSig = this.objectToSig.get(memberId);
+                    var memberJson = parseObject(memberSig, memberId);
+                    membersJson.add(memberJson);
+                }
+                json.add(Util.fieldName(field), membersJson);
+            }
+        }
+        return json;
     }
 
 }

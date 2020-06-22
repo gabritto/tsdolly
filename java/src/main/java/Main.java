@@ -7,9 +7,6 @@ import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
 import tsdolly.Program;
 
-import java.util.List;
-import java.util.Map;
-
 public class Main {
     static private String alloyTheory = "../typescript.als";
 
@@ -44,6 +41,7 @@ public class Main {
             System.out.println("Function:\n" + f.toString());
             var p = new Program(solution);
             System.out.println("Program:\n" + p.toString());
+            System.out.println("Program as json:\n" + p.toJson().toString());
             solution = solution.next();
         }
     }
@@ -64,7 +62,7 @@ public class Main {
         return null;
     }
 
-    private static A4Reporter createA4Reporter() {
+    private static A4Reporter createA4Reporter() { // TODO: review this
         return new A4Reporter() {
             @Override
             public void warning(ErrorWarning msg) {
