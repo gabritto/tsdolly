@@ -5,6 +5,7 @@ import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+import tsdolly.Program;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,8 @@ public class Main {
             Sig function = findSig(solution);
             var f = solution.eval(function);
             System.out.println("Function:\n" + f.toString());
-
+            var p = new Program(solution);
+            System.out.println("Program:\n" + p.toString());
             solution = solution.next();
         }
     }
@@ -52,6 +54,7 @@ public class Main {
             System.out.println("Sig label:\n" + sig.label);
             System.out.println("Sig fields:\n" + sig.getFields().toString());
             for (var field: sig.getFields()) {
+                System.out.println("Sig field:\n" + field.label);
                 System.out.println("Fields eval:\n" + solution.eval(field));
             }
             if (sig.label.equals("this/FunctionDecl")) {
