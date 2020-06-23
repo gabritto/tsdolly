@@ -8,7 +8,6 @@ import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.A4Tuple;
 
 import java.util.*;
-import tsdolly.Util;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.common.collect.Multimap;
@@ -58,7 +57,7 @@ public class Program {
     private final Map<Id, Sig> objectToSig;
     private final Multimap<Sig, Field> sigFields; // Maps a sig to its fields
     private final Map<Field, Multimap<Id, Id>> relations; // Maps a relation (field) to its members
-    private final Id programId; // TODO: is this ok? Can we assume we are generating 1 program per Alloy solution?
+    private final Id programId;
 
     public Program(A4Solution solution) {
         assert solution.satisfiable() : solution;
@@ -69,8 +68,15 @@ public class Program {
         for (Sig sig : solution.getAllReachableSigs()) { // TODO: filter by user-defined sigs?.
             for (final A4Tuple sigTuple : solution.eval(sig)) {
                 final var instanceId = new Id(Util.sigInstanceId(sigTuple));
-                assert !this.objectToSig.containsKey(instanceId);
-                this.objectToSig.put(instanceId, sig);
+                if (this.objectToSig.containsKey(instanceId)) {
+                    var otherSig = this.objectToSig.get(instanceId);
+                    if (sig.isSameOrDescendentOf(otherSig)) { // We want the most specific sig possible for an object.
+                        this.objectToSig.put(instanceId, sig);
+                    }
+                }
+                else {
+                    this.objectToSig.put(instanceId, sig);
+                }
                 this.sigToObjects.put(sig, instanceId);
             }
 
@@ -100,11 +106,23 @@ public class Program {
 
     public JsonElement toJson() {
         var programSig = this.objectToSig.get(this.programId);
-        return parseObject(programSig, this.programId);
+        var jsonArray = new JsonArray();
+        var objects = new HashMap<Id, JsonElement>();
+        parseObject(objects, programSig, this.programId);
+        for (JsonElement json : objects.values()) {
+            jsonArray.add(json);
+        }
+        return jsonArray;
     }
 
-    public JsonElement parseObject(Sig sig, Id objectId) {
+    public void parseObject(Map<Id, JsonElement> objects, Sig sig, Id objectId) {
+        if (objects.containsKey(objectId)) {
+            return; // We already parsed this object.
+        }
+
         var json = new JsonObject();
+        objects.put(objectId, json);
+
         json.add(Util.ID_FIELD, objectId.toJson());
         json.add(Util.TYPE_FIELD, Util.sigToJson(sig));
         var fields = this.sigFields.get(sig);
@@ -113,24 +131,20 @@ public class Program {
             // There are 3 possibilities: no members, one member, more than one member.
             if (members == null || members.isEmpty()) {
                 continue;
-            }
-            else if (members.size() == 1) {
+            } else if (members.size() == 1) {
                 Id memberId = members.iterator().next();
                 var memberSig = this.objectToSig.get(memberId);
-                var memberJson = parseObject(memberSig, memberId);
-                json.add(Util.fieldName(field), memberJson);
-            }
-            else {
+                parseObject(objects, memberSig, memberId);
+                json.add(Util.fieldName(field), memberId.toJson());
+            } else {
                 var membersJson = new JsonArray();
                 for (Id memberId : members) {
                     var memberSig = this.objectToSig.get(memberId);
-                    var memberJson = parseObject(memberSig, memberId);
-                    membersJson.add(memberJson);
+                    parseObject(objects, memberSig, memberId);
+                    membersJson.add(memberId.toJson());
                 }
                 json.add(Util.fieldName(field), membersJson);
             }
         }
-        return json;
     }
-
 }

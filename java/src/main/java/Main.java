@@ -40,7 +40,6 @@ public class Main {
             var f = solution.eval(function);
             System.out.println("Function:\n" + f.toString());
             var p = new Program(solution);
-            System.out.println("Program:\n" + p.toString());
             System.out.println("Program as json:\n" + p.toJson().toString());
             solution = solution.next();
         }
@@ -49,11 +48,11 @@ public class Main {
     private static Sig findSig(A4Solution solution) {
         var sigs = solution.getAllReachableSigs();
         for (Sig sig: sigs) {
-            System.out.println("Sig label:\n" + sig.label);
-            System.out.println("Sig fields:\n" + sig.getFields().toString());
+//            System.out.println("Sig label:\n" + sig.label);
+//            System.out.println("Sig fields:\n" + sig.getFields().toString());
             for (var field: sig.getFields()) {
-                System.out.println("Sig field:\n" + field.label);
-                System.out.println("Fields eval:\n" + solution.eval(field));
+//                System.out.println("Sig field:\n" + field.label);
+//                System.out.println("Fields eval:\n" + solution.eval(field));
             }
             if (sig.label.equals("this/FunctionDecl")) {
                 return sig;

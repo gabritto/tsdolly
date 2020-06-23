@@ -2,16 +2,22 @@ package tsdolly;
 import com.google.gson.JsonPrimitive;
 import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.translator.A4Tuple;
-
-import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Util {
     static public final String ID_FIELD = "id";
     static public final String TYPE_FIELD = "type";
 
     static public String sigName(Sig sig) {
+        Matcher matcher = SIG_PATTERN.matcher(sig.label);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
         return sig.label;
     }
+
+    static private final Pattern SIG_PATTERN = Pattern.compile("this/(\\S+)");
 
     static public JsonPrimitive sigToJson(Sig sig) {
         return new JsonPrimitive(sigName(sig));
@@ -33,6 +39,7 @@ public class Util {
 
     static public Sig getProgramSig(Iterable<Sig> sigs) {
         for (final Sig sig : sigs) {
+            System.out.println("Sig name: " + sigName(sig));
             if (sigName(sig).equals(PROGRAM_SIG)) {
                 return sig;
             }

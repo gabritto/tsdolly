@@ -14,3 +14,4 @@ This work is part of a bachelor's thesis.
  - [ ] Add instructions on how to run.
  - [ ] Add instructions on how to contribute.
  - [ ] Add license? (Must check libraries' licenses (guava, alloy, gson))
+ - [ ] Add .gradle to .gitignore.

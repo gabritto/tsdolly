@@ -1,0 +1,2 @@
+[{"id":"FunctionDecl$0","type":"FunctionDecl","parameters":["ParameterDecl$1","ParameterDecl$0"],"name":"Identifier$1"},{"id":"Program$0","type":"Program","declarations":"FunctionDecl$0"},{"id":"ParameterDecl$1","type":"TString$0","function":"FunctionDecl$0","name":"Identifier$0"},{"id":"TString$0","type":"TString"},{"id":"ParameterDecl$0","type":"TString$0","function":"FunctionDecl$0","name":"Identifier$1"},{"id":"Identifier$1","type":"Identifier"},{"id":"Identifier$0","type":"Identifier"}]
+
