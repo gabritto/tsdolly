@@ -1,0 +1,23 @@
+{
+  "name": "tsdolly",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "",
+    "build": "npm run generateSchema && tsc",
+    "run": "npm run build && node dist/index.js",
+    "generateSchema": "npx ts-json-schema-generator --path src/types.ts --out schema/types.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^6.12.2", 
+    "typescript": "^3.9.5",
+    "yargs": "^15.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.14",
+    "@types/yargs": "^15.0.5"
+  }
+}

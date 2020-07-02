@@ -24,22 +24,20 @@ public class Util {
     }
 
     static public String sigInstanceId(A4Tuple instance) {
-        return instance.toString(); // TODO: parse; validate
+        return instance.toString();
     }
 
     static public String fieldName(Sig.Field field) {
         return field.label;
     }
 
-    static public Pair<String, String> fieldEntry(A4Tuple entry) { // TODO: parse; assert tuple
-        System.out.println("Field entry:\n" + entry.toString());
+    static public Pair<String, String> fieldEntry(A4Tuple entry) {
         var elements = entry.toString().split("->");
         return new Pair<>(elements[0], elements[1]);
     }
 
     static public Sig getProgramSig(Iterable<Sig> sigs) {
         for (final Sig sig : sigs) {
-            System.out.println("Sig name: " + sigName(sig));
             if (sigName(sig).equals(PROGRAM_SIG)) {
                 return sig;
             }
