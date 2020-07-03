@@ -1,10 +1,245 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "RawObject": {
+    "AssignmentExpression": {
       "additionalProperties": false,
       "properties": {
-        "id": {
+        "left": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "AssignmentExpression"
+          ],
+          "type": "string"
+        },
+        "right": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "nodeId",
+        "nodeType",
+        "right"
+      ],
+      "type": "object"
+    },
+    "Block": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "Block"
+          ],
+          "type": "string"
+        },
+        "statements": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType",
+        "statements"
+      ],
+      "type": "object"
+    },
+    "Declaration": {
+      "$ref": "#/definitions/FunctionDecl"
+    },
+    "Expression": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AssignmentExpression"
+        },
+        {
+          "$ref": "#/definitions/LValue"
+        }
+      ]
+    },
+    "ExpressionStatement": {
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "ExpressionStatement"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "expression",
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "FunctionDecl": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "FunctionDecl"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "returnType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "body",
+        "name",
+        "nodeId",
+        "nodeType",
+        "parameters",
+        "returnType"
+      ],
+      "type": "object"
+    },
+    "Identifier": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "Identifier"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "InterfaceType": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "InterfaceType"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "LValue": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "LValue"
+          ],
+          "type": "string"
+        },
+        "variableAccess": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType",
+        "variableAccess"
+      ],
+      "type": "object"
+    },
+    "Node": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "ObjectLiteralType": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "ObjectLiteralType"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "ParameterDecl": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "Parameter"
+          ],
           "type": "string"
         },
         "type": {
@@ -12,19 +247,111 @@
         }
       },
       "required": [
-        "type",
-        "id"
+        "name",
+        "nodeId",
+        "nodeType",
+        "type"
       ],
       "type": "object"
     },
-    "RawSolutions": {
+    "PrimType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TNumber"
+        },
+        {
+          "$ref": "#/definitions/TString"
+        }
+      ]
+    },
+    "Program": {
+      "additionalProperties": false,
+      "properties": {
+        "declarations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "Program"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "declarations",
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "Solutions": {
       "items": {
         "items": {
-          "$ref": "#/definitions/RawObject"
+          "$ref": "#/definitions/Node"
         },
         "type": "array"
       },
       "type": "array"
+    },
+    "Statement": {
+      "$ref": "#/definitions/ExpressionStatement"
+    },
+    "TNumber": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "TNumber"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "TString": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "TString"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "Type": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PrimType"
+        },
+        {
+          "$ref": "#/definitions/InterfaceType"
+        },
+        {
+          "$ref": "#/definitions/ObjectLiteralType"
+        }
+      ]
     }
   }
 }
