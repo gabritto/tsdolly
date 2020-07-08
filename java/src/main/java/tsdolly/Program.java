@@ -98,7 +98,7 @@ public class Program {
         var programs = this.sigToObjects.get(programSig);
         if (programs == null || programs.size() != 1) {
             final int programCount = programs == null ? 0 : programs.size();
-            throw new IllegalArgumentException("Expected solution to have a single instance of type`Program`," +
+            throw new IllegalArgumentException("Expected solution to have a single instance of type `Program`," +
                 " instead found " + programCount);
         }
         this.programId = programs.iterator().next();

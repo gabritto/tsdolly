@@ -6,8 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Util {
-    static public final String ID_FIELD = "id";
-    static public final String TYPE_FIELD = "type";
+    static public final String ID_FIELD = "nodeId";
+    static public final String TYPE_FIELD = "nodeType";
 
     static public String sigName(Sig sig) {
         Matcher matcher = SIG_PATTERN.matcher(sig.label);

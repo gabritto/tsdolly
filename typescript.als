@@ -1,17 +1,14 @@
 -- Basics
-sig Identifier extends Expression {} -- TODO: should identifiers be different for each decl that has one? This is allowed in TS but might generate weird examples
+sig Identifier {} -- TODO: should identifiers be different for each node that has one? This is allowed in TS but might generate weird examples or increase complexity
 
 one sig Program {
 	declarations: set Declaration
 }
 
-//fun classes[pack:Package]: set Class {
-//	pack.~package
-//}
 -- Declarations
-abstract sig Declaration {}
-fact {
-	all d: Declaration | some p: Program | d in p.declarations
+abstract sig Declaration {} -- Top-level declarations. TODO: rethink this design.
+fact DeclarationParent {
+	all d: Declaration | one p: Program | d in p.declarations -- TODO: this is only for top-level decls
 }
 
 sig FunctionDecl extends Declaration {
@@ -28,20 +25,33 @@ fact UniqueParameterNames {
 
 sig ParameterDecl {
 	name: one Identifier,
-	type: one Type, -- Must have a type annotation
-	function: one FunctionDecl -- TODO: remove? parent
+	type: one Type, -- Must have a type annotation (simplifying for strict mode use)
 }
 
-fact {
-	function = ~parameters
+fact ParameterDeclParent {
+	all p: ParameterDecl | one f: FunctionDecl | p in f.parameters
 }
 
 sig Block {
 	statements: set Statement
 }
 
+fact BlockParent {
+	all b: Block | one f: FunctionDecl | b in f.body
+}
+
 abstract sig Statement {}
+
+fact StatementParent {
+	all s: Statement | one b: Block | s in b.statements
+}
+
 abstract sig Expression {}
+fact ExpressionParent {
+	all e: Expression {
+		(one s: Statement | e in s.expression) or (one e_other: Expression | e in e_other.left or e in e_other.right)
+	}
+}
 
 sig ExpressionStatement extends Statement {
 	expression: one Expression
@@ -70,11 +80,11 @@ abstract sig Type {}
 abstract sig PrimType extends Type {}
 sig InterfaceType extends Type {}
 sig ObjectLiteralType extends Type {}
-one sig TInt extends PrimType {}
+one sig TNumber extends PrimType {}
 one sig TString extends PrimType {}
 
 -- Testing
 pred show {}
 //run show for 3 but exactly 1 FunctionDecl, exactly 2 ParameterDecl, exactly 2 Identifier
-run show for 2 but exactly 2 ParameterDecl, exactly 1 FunctionDecl
+run show for 2 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, 3 Identifier
 
