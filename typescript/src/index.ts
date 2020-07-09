@@ -31,133 +31,128 @@ function tsdolly(args: { solution: string }): void {
         throw ajv.errors;
     }
     const solutionsJson = solutionsRaw as types.Solutions;
-    const solutionsMap = solutionsJson.map(objectsMap);
-    console.log(`${solutionsMap.length} solutions found`);
-    console.log(JSON.stringify(solutionsJson[0], undefined, 4));
+    console.log(`${solutionsJson.length} solutions found`);
+    console.log(JSON.stringify(solutionsJson[0], undefined, 4)); // Debugging
 }
 
-function solutionToProgram(objectMap: Map<string, types.Node>) {
-    const program = getOrThrow(objectMap, ENTRY_ID);
-}
+function buildProgram(program: types.Program): ts.SourceFile {
+    // const program = project.createSourceFile("../output/program.ts");
+    // const functions = program.addFunctions();
+    // const file = ts.createSourceFile("../output/program.ts", undefined, ts.ScriptTarget.Latest);
+    for (const declarationId of program.declarations) {
 
-class SolutionParser {
-    private ajv: Ajv.Ajv;
-    private objectMap: Map<string, types.Node>;
-
-    constructor(objects: types.Node[]) {
-        this.ajv = new Ajv({ removeAdditional: true }).addSchema(SCHEMA, "types");
-        this.objectMap = SolutionParser.objectsMap(objects);
-    }
-
-    private static objectsMap(objects: types.Node[]): Map<string, types.Node> {
-        const objectMap = new Map<string, types.Node>();
-        for (const object of objects) {
-            objectMap.set(object.nodeId, object);
-        }
-        return objectMap;
-    }
-
-    buildProgram(node: types.Node): undefined {
-        // const project = new Project({
-        //     compilerOptions: {
-        //         strict: true
-        //     }
-        // });
-        // const program = project.createSourceFile("../output/program.ts");
-        // const functions = program.addFunctions();
-        // const file = ts.createSourceFile("../output/program.ts", undefined, ts.ScriptTarget.Latest);
-        const program = this.parseProgram(node);
-        for (const declarationId of program.declarations) {
-            // TODO: build declarations & create program
-        }
-    }
-
-    buildDeclaration(node: types.Node): ts.Declaration {
-        // TODO: implement
-    }
-
-    buildFunctionDecl(node: types.Node): ts.FunctionDeclaration {
-        const functionNode = this.parseFunctionDecl(node);
-        const name = this.getIdentifier(functionNode.name);
-        const parameters: ts.ParameterDeclaration[] = [];
-        for (const parameterId of functionNode.parameters) {
-            const parameterNode = getOrThrow(this.objectMap, parameterId);
-            parameters.push(this.buildParameterDecl(parameterNode));
-        }
-
-        const functionDecl = ts.createFunctionDeclaration(
-            /* decorators */ undefined,
-            /* modifiers */ undefined,
-            /* asteriskToken */ undefined,
-            /* name */ name,
-            /* typeParameters */ undefined,
-            /* parameters */ parameters, // TODO: pass params
-            /* type */ undefined,
-            /* body */ undefined
-            );
-        return functionDecl;
-    }
-
-    buildParameterDecl(node: types.Node): ts.ParameterDeclaration {
-        const paramNode = this.parseParameterDecl(node);
-        const param = ts.createParameter(/* TODO */);
-        return param;
-        // TODO: implement
-    }
-
-    private getIdentifier(nodeId: string): string {
-        return nodeId; // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
-    }
-
-    private parseProgram(node: types.Node): types.Program {
-        if (!this.ajv.validate({ $ref: "types#/definitions/Program" }, node)) {
-            throw this.ajv.errors;
-        }
-
-        return node as types.Program;
-    }
-
-    // private parseDeclaration(node: types.Node): types.Declaration {
-    //     switch (node.nodeType) {
-    //         case "FunctionDecl":
-    //             return this.parseFunctionDecl(node);
-    //     }
-
-    //     throw new Error(unexpectedTypeMessage("Declaration", node.nodeType));
-    // }
-
-    private parseFunctionDecl(node: types.Node): types.FunctionDecl {
-        if (!this.ajv.validate({ $ref: "types#/definitions/FunctionDecl" }, node)) {
-            throw this.ajv.errors;
-        }
-
-        return node as types.FunctionDecl;
-    }
-
-    private parseParameterDecl(node: types.Node): types.ParameterDecl {
-        if (!this.ajv.validate({ $ref: "types#/definitions/ParameterDecl" }, node)) {
-            throw this.ajv.errors;
-        }
-
-        return node as types.ParameterDecl;
+        // TODO: build declarations & create program
     }
 }
 
-function unexpectedTypeMessage(expectedType: string, gotType: string): string {
-    return `Expected node of type '${expectedType}', got node of type ${gotType}`;
+function buildDeclaration(declaration: types.Declaration): ts.DeclarationStatement {
+    switch (declaration.nodeType) {
+        case "FunctionDecl":
+            return buildFunctionDecl(declaration);
+    }
 }
 
+function buildFunctionDecl(functionDecl: types.FunctionDecl): ts.FunctionDeclaration {
+    const name = getIdentifier(functionDecl.name);
+    const parameters: ts.ParameterDeclaration[] = functionDecl.parameters.map(buildParameterDecl);
+    const body: ts.Block = buildBlock(functionDecl.body);
+
+    return ts.createFunctionDeclaration(
+        /* decorators */ undefined,
+        /* modifiers */ undefined,
+        /* asteriskToken */ undefined,
+        /* name */ name,
+        /* typeParameters */ undefined,
+        /* parameters */ parameters, // TODO: pass params
+        /* type */ undefined,
+        /* body */ body
+        );
+}
+
+function buildParameterDecl(parameterDecl: types.ParameterDecl): ts.ParameterDeclaration {
+    const name = getIdentifier(parameterDecl.name);
+    const type = buildType(parameterDecl.type);
+
+    return ts.createParameter(
+        /* decorators */ undefined,
+        /* modifiers */ undefined,
+        /* dotDotToken */ undefined,
+        /* name */ name,
+        /* questionToken */ undefined,
+        /* type */ type,
+        /* initializer */ undefined
+    );
+}
+
+function buildType(type: types.Type): ts.TypeNode {
+    switch (type.nodeType) {
+        case "TNumber":
+        case "TString":
+            return buildPrimType(type);
+    }
+}
+
+function buildPrimType(type: types.PrimType): ts.TypeNode {
+    switch (type.nodeType) {
+        case "TNumber":
+            return ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+        case "TString":
+            return ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    }
+}
+
+function buildBlock(block: types.Block): ts.Block {
+    const statements = block.statements.map(buildStatement);
+
+    return ts.createBlock(
+        /* statements */ statements,
+        /* multiline */ true
+    )
+}
+
+function buildStatement(statement: types.Statement): ts.Statement {
+    switch (statement.nodeType) {
+        case "ExpressionStatement":
+            return buildExpressionStatement(statement);
+    }
+}
+
+function buildExpressionStatement(expressionStatement: types.ExpressionStatement): ts.ExpressionStatement {
+    const expression = buildExpression(expressionStatement.expression);
+
+    return ts.createExpressionStatement(expression);
+}
+
+function buildExpression(expression: types.Expression): ts.Expression {
+    switch (expression.nodeType) {
+        case "VariableAccess":
+            return buildVariableAccess(expression);
+        case "AssignmentExpression":
+            return buildAssignmentExpression(expression);
+    }
+}
+
+function buildVariableAccess(variableAccess: types.VariableAccess): ts.Expression {
+    const identifier = getIdentifier(variableAccess.variable);
+
+    return ts.createIdentifier(identifier);
+}
+
+function buildAssignmentExpression(assignmentExpression: types.AssignmentExpression): ts.BinaryExpression {
+    const left = buildVariableAccess(assignmentExpression.left);
+    const right = buildExpression(assignmentExpression.right);
+
+    return ts.createBinary(
+        /* left */ left,
+        /* operator */ ts.SyntaxKind.EqualsToken,
+        /* right */ right
+    );
+}
+
+function getIdentifier(identifier: types.Identifier): string {
+    return identifier.nodeId; // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
+}
 
 if (!module.parent) {
     main();
-}
-
-// Utility
-
-function getOrThrow<K, V>(map: Map<K, V>, key: K): V {
-    const value = map.get(key);
-    if (value === undefined) {
-        throw new Error(`Key ${key} not found`);
-    }
-    return value;
 }
