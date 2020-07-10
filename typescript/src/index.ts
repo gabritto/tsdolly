@@ -25,27 +25,28 @@ function main(): void {
 function tsdolly(args: { solution: string }): void {
     const solutionFile = fs.readFileSync(args.solution, { encoding: "utf-8" });
     const solutionsRaw: unknown = JSON.parse(solutionFile);
-    const ajv = new Ajv({ removeAdditional: true });
+    console.log(JSON.stringify((solutionsRaw as unknown[])[0], undefined, 4));
+    const ajv = new Ajv();
     ajv.addSchema(SCHEMA, "types");
     if (!ajv.validate({ $ref: "types#/definitions/Solutions" }, solutionsRaw)) {
         throw ajv.errors;
     }
-    const solutionsJson = solutionsRaw as types.Solutions;
-    console.log(`${solutionsJson.length} solutions found`);
-    console.log(JSON.stringify(solutionsJson[0], undefined, 4)); // Debugging
+    const solutions = solutionsRaw as types.Solutions;
+    console.log(`${solutions.length} solutions found`);
+    const programs = solutions.map(buildProgram);
 }
 
-function buildProgram(program: types.Program): ts.SourceFile {
-    // const program = project.createSourceFile("../output/program.ts");
-    // const functions = program.addFunctions();
-    // const file = ts.createSourceFile("../output/program.ts", undefined, ts.ScriptTarget.Latest);
-    for (const declarationId of program.declarations) {
+function buildProgram(program: types.Program): string {    
+    const declarations = ts.createNodeArray(program.declarations.map(buildDeclaration));
+    const file = ts.createSourceFile("../output/program.ts", "", ts.ScriptTarget.Latest, /*setParentNodes*/ false, ts.ScriptKind.TS);
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
 
-        // TODO: build declarations & create program
-    }
+    const result = printer.printList(ts.ListFormat.MultiLine, declarations, file);
+    // console.log(result);
+    return result;
 }
 
-function buildDeclaration(declaration: types.Declaration): ts.DeclarationStatement {
+function buildDeclaration(declaration: types.Declaration): ts.FunctionDeclaration {
     switch (declaration.nodeType) {
         case "FunctionDecl":
             return buildFunctionDecl(declaration);

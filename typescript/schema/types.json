@@ -5,7 +5,7 @@
       "additionalProperties": false,
       "properties": {
         "left": {
-          "type": "string"
+          "$ref": "#/definitions/VariableAccess"
         },
         "nodeId": {
           "type": "string"
@@ -17,7 +17,7 @@
           "type": "string"
         },
         "right": {
-          "type": "string"
+          "$ref": "#/definitions/Expression"
         }
       },
       "required": [
@@ -42,7 +42,7 @@
         },
         "statements": {
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Statement"
           },
           "type": "array"
         }
@@ -63,7 +63,7 @@
           "$ref": "#/definitions/AssignmentExpression"
         },
         {
-          "$ref": "#/definitions/LValue"
+          "$ref": "#/definitions/VariableAccess"
         }
       ]
     },
@@ -71,7 +71,7 @@
       "additionalProperties": false,
       "properties": {
         "expression": {
-          "type": "string"
+          "$ref": "#/definitions/Expression"
         },
         "nodeId": {
           "type": "string"
@@ -94,10 +94,10 @@
       "additionalProperties": false,
       "properties": {
         "body": {
-          "type": "string"
+          "$ref": "#/definitions/Block"
         },
         "name": {
-          "type": "string"
+          "$ref": "#/definitions/Identifier"
         },
         "nodeId": {
           "type": "string"
@@ -110,15 +110,9 @@
         },
         "parameters": {
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/ParameterDecl"
           },
           "type": "array"
-        },
-        "returnType": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [
@@ -126,8 +120,7 @@
         "name",
         "nodeId",
         "nodeType",
-        "parameters",
-        "returnType"
+        "parameters"
       ],
       "type": "object"
     },
@@ -150,48 +143,6 @@
       ],
       "type": "object"
     },
-    "InterfaceType": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "InterfaceType"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "LValue": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "LValue"
-          ],
-          "type": "string"
-        },
-        "variableAccess": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType",
-        "variableAccess"
-      ],
-      "type": "object"
-    },
     "Node": {
       "additionalProperties": false,
       "properties": {
@@ -208,42 +159,23 @@
       ],
       "type": "object"
     },
-    "ObjectLiteralType": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "ObjectLiteralType"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
     "ParameterDecl": {
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "$ref": "#/definitions/Identifier"
         },
         "nodeId": {
           "type": "string"
         },
         "nodeType": {
           "enum": [
-            "Parameter"
+            "ParameterDecl"
           ],
           "type": "string"
         },
         "type": {
-          "type": "string"
+          "$ref": "#/definitions/Type"
         }
       },
       "required": [
@@ -269,7 +201,7 @@
       "properties": {
         "declarations": {
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Declaration"
           },
           "type": "array"
         },
@@ -292,10 +224,7 @@
     },
     "Solutions": {
       "items": {
-        "items": {
-          "$ref": "#/definitions/Node"
-        },
-        "type": "array"
+        "$ref": "#/definitions/Program"
       },
       "type": "array"
     },
@@ -341,17 +270,30 @@
       "type": "object"
     },
     "Type": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/PrimType"
+      "$ref": "#/definitions/PrimType"
+    },
+    "VariableAccess": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
         },
-        {
-          "$ref": "#/definitions/InterfaceType"
+        "nodeType": {
+          "enum": [
+            "VariableAccess"
+          ],
+          "type": "string"
         },
-        {
-          "$ref": "#/definitions/ObjectLiteralType"
+        "variable": {
+          "$ref": "#/definitions/Identifier"
         }
-      ]
+      },
+      "required": [
+        "nodeId",
+        "nodeType",
+        "variable"
+      ],
+      "type": "object"
     }
   }
 }

@@ -25,7 +25,7 @@ export interface FunctionDecl extends Node {
 }
 
 export interface ParameterDecl extends Node {
-    nodeType: "Parameter",
+    nodeType: "ParameterDecl",
     name: Identifier,
     type: Type
 }

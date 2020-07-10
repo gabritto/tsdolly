@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "",
-    "build": "npm run generateSchema && tsc",
-    "newRun": "npm run build && npm run run",
+    "ts-build": "tsc",
+    "build": "npm run generateSchema && npm run ts-build",
+    "ts-run": "npm run ts-build && npm run run",
+    "new-run": "npm run build-all && npm run run",
     "run": "node dist/index.js",
     "generateSchema": "npx ts-json-schema-generator --path src/types.ts --out schema/types.json"
   },
@@ -14,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^6.12.2",
-    "typescript": "^3.9.5",
+    "typescript": "~3.9.5",
     "yargs": "^15.0.5"
   },
   "devDependencies": {
