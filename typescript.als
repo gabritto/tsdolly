@@ -6,7 +6,7 @@ one sig Program {
 }
 
 -- Declarations
-abstract sig Declaration {} -- Top-level declarations. TODO: rethink this design.
+abstract sig Declaration {} -- Top-level declarations. TODO: rethink this design if we want to have nested Declarations
 fact DeclarationParent {
 	all d: Declaration | one p: Program | d in p.declarations -- TODO: this is only for top-level decls
 }
@@ -14,13 +14,17 @@ fact DeclarationParent {
 sig FunctionDecl extends Declaration {
 	name: one Identifier, -- TODO: should name belong to "Declaration"?
 	parameters: set ParameterDecl,
-	body: one Block,
-	returnType: lone Type
+	body: one Block --,
+	-- returnType: lone Type -- Remove this to reduce compilation errors
 }
 
 fact UniqueParameterNames {
 	all f: FunctionDecl, p1, p2: f.parameters | p1 != p2 => p1.name != p2.name
 	-- Parameters of a given function have different names
+}
+
+fact UniqueFunctionNames { -- TODO: have "name" be part of Declaration and then place uniqueness constraint on name?
+	all f1, f2: FunctionDecl | f1 != f2 => f1.name != f2.name
 }
 
 sig ParameterDecl {
@@ -36,6 +40,10 @@ sig Block {
 	statements: set Statement
 }
 
+//sig FunctionBlock extends Block {
+//	return: one Expression
+//}
+
 fact BlockParent {
 	all b: Block | one f: FunctionDecl | b in f.body
 }
@@ -47,9 +55,10 @@ fact StatementParent {
 }
 
 abstract sig Expression {}
+
 fact ExpressionParent {
 	all e: Expression {
-		(one s: Statement | e in s.expression) or (one e_other: Expression | e in e_other.left or e in e_other.right)
+		(one s: Statement | e in s.expression) or (one e_other: Expression | (e in e_other.left) or (e in e_other.right))
 	}
 }
 
@@ -58,12 +67,16 @@ sig ExpressionStatement extends Statement {
 }
 
 sig AssignmentExpression extends Expression {
-	left: one LValue,
+	left: one VariableAccess,
 	right: one Expression
 }
 
-sig LValue extends Expression {
-	variableAccess: one Identifier
+fact AssignmentExpressionNoCycle {
+	all a: AssignmentExpression | a not in a.^right
+}
+
+sig VariableAccess extends Expression {
+	variable: one Identifier -- TODO: assert identifier is declared
 }
 
 //sig BinaryExpression extends Expression {
@@ -78,8 +91,9 @@ sig LValue extends Expression {
 -- Types
 abstract sig Type {}
 abstract sig PrimType extends Type {}
-sig InterfaceType extends Type {}
-sig ObjectLiteralType extends Type {}
+// TODO: use this later for extract type refactoring
+//sig InterfaceType extends Type {}
+//sig ObjectLiteralType extends Type {}
 one sig TNumber extends PrimType {}
 one sig TString extends PrimType {}
 

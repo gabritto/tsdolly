@@ -2,6 +2,7 @@ package tsdolly;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonPrimitive;
+import edu.mit.csail.sdg.ast.ExprUnary;
 import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.translator.A4Solution;
@@ -106,45 +107,34 @@ public class Program {
 
     public JsonElement toJson() {
         var programSig = this.objectToSig.get(this.programId);
-        var jsonArray = new JsonArray();
-        var objects = new HashMap<Id, JsonElement>();
-        parseObject(objects, programSig, this.programId);
-        for (JsonElement json : objects.values()) {
-            jsonArray.add(json);
-        }
-        return jsonArray;
+        return parseObject(programSig, this.programId);
     }
 
-    public void parseObject(Map<Id, JsonElement> objects, Sig sig, Id objectId) {
-        if (objects.containsKey(objectId)) {
-            return; // We already parsed this object.
-        }
-
+    public JsonElement parseObject(Sig sig, Id objectId) { // TODO: implement cycle detection? Otherwise will have a stack overflow
         var json = new JsonObject();
-        objects.put(objectId, json);
 
         json.add(Util.ID_FIELD, objectId.toJson());
         json.add(Util.TYPE_FIELD, Util.sigToJson(sig));
         var fields = this.sigFields.get(sig);
         for (Field field: fields) {
             var members = this.relations.get(field).get(objectId);
-            // There are 3 possibilities: no members, one member, more than one member.
-            if (members == null || members.isEmpty()) {
-                continue;
-            } else if (members.size() == 1) {
-                Id memberId = members.iterator().next();
-                var memberSig = this.objectToSig.get(memberId);
-                parseObject(objects, memberSig, memberId);
-                json.add(Util.fieldName(field), memberId.toJson());
-            } else {
+            var mult = field.decl().expr.mult();
+            if (mult.equals(ExprUnary.Op.SETOF)) {
                 var membersJson = new JsonArray();
                 for (Id memberId : members) {
                     var memberSig = this.objectToSig.get(memberId);
-                    parseObject(objects, memberSig, memberId);
-                    membersJson.add(memberId.toJson());
+                    var memberJson = parseObject(memberSig, memberId);
+                    membersJson.add(memberJson);
                 }
                 json.add(Util.fieldName(field), membersJson);
             }
+            else if (members.iterator().hasNext()) {
+                Id memberId = members.iterator().next();
+                var memberSig = this.objectToSig.get(memberId);
+                var memberJson = parseObject(memberSig, memberId);
+                json.add(Util.fieldName(field), memberJson);
+            }
         }
+        return json;
     }
 }
