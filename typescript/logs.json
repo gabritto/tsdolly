@@ -1,0 +1,1068 @@
+
+> tsdolly@1.0.0 ts-run /home/gabriela/projects/tg/alloy/typescript
+> npm run ts-build && npm run run
+
+
+> tsdolly@1.0.0 ts-build /home/gabriela/projects/tg/alloy/typescript
+> tsc
+
+
+> tsdolly@1.0.0 run /home/gabriela/projects/tg/alloy/typescript
+> node dist/index.js
+
+{
+    "nodeId": "Program$0",
+    "nodeType": "Program",
+    "declarations": [
+        {
+            "nodeId": "FunctionDecl$0",
+            "nodeType": "FunctionDecl",
+            "name": {
+                "nodeId": "Identifier$1",
+                "nodeType": "Identifier"
+            },
+            "parameters": [
+                {
+                    "nodeId": "ParameterDecl$1",
+                    "nodeType": "ParameterDecl",
+                    "name": {
+                        "nodeId": "Identifier$0",
+                        "nodeType": "Identifier"
+                    },
+                    "type": {
+                        "nodeId": "TString$0",
+                        "nodeType": "TString"
+                    }
+                },
+                {
+                    "nodeId": "ParameterDecl$0",
+                    "nodeType": "ParameterDecl",
+                    "name": {
+                        "nodeId": "Identifier$1",
+                        "nodeType": "Identifier"
+                    },
+                    "type": {
+                        "nodeId": "TNumber$0",
+                        "nodeType": "TNumber"
+                    }
+                }
+            ],
+            "body": {
+                "nodeId": "Block$0",
+                "nodeType": "Block",
+                "statements": [
+                    {
+                        "nodeId": "ExpressionStatement$0",
+                        "nodeType": "ExpressionStatement",
+                        "expression": {
+                            "nodeId": "AssignmentExpression$0",
+                            "nodeType": "AssignmentExpression",
+                            "right": {
+                                "nodeId": "VariableAccess$0",
+                                "nodeType": "VariableAccess",
+                                "variable": {
+                                    "nodeId": "Identifier$0",
+                                    "nodeType": "Identifier"
+                                }
+                            },
+                            "left": {
+                                "nodeId": "VariableAccess$0",
+                                "nodeType": "VariableAccess",
+                                "variable": {
+                                    "nodeId": "Identifier$0",
+                                    "nodeType": "Identifier"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+196 solutions found
+Total programs: 196
+Total programs that compile: 156
+Compiling rate: 79.59183673469387%
+[
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: string, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$1(Identifier$0: number, Identifier$1: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: string) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m3\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0 = Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m                   ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$0;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2552: \u001b[0mCannot find name 'Identifier$0'. Did you mean 'Identifier$1'?\n\n\u001b[7m2\u001b[0m     Identifier$0;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n\n  \u001b[96mfile.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m23\u001b[0m\n    \u001b[7m1\u001b[0m function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    \u001b[7m \u001b[0m \u001b[96m                      ~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    'Identifier$1' is declared here.\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: string, Identifier$2: string) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$1: number, Identifier$2: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2 = Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2;\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1 = Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$1;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0 = Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$0;\n}\n",
+        "hasError": false,
+        "errors": ""
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: number, Identifier$1: number) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n    Identifier$2 = Identifier$2;\n}\n",
+        "hasError": true,
+        "errors": "\u001b[96mfile.ts\u001b[0m:\u001b[93m2\u001b[0m:\u001b[93m5\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2539: \u001b[0mCannot assign to 'Identifier$2' because it is not a variable.\n\n\u001b[7m2\u001b[0m     Identifier$2 = Identifier$2;\n\u001b[7m \u001b[0m \u001b[91m    ~~~~~~~~~~~~\u001b[0m\n"
+    },
+    {
+        "program": "function Identifier$2(Identifier$0: string, Identifier$1: string) {\n}\n",
+        "hasError": false,
+        "errors": ""
+    }
+]

@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^6.12.2",
+    "ts-morph": "^7.1.2",
     "typescript": "~3.9.5",
     "yargs": "^15.0.5"
   },
