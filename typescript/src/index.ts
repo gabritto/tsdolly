@@ -4,7 +4,7 @@ import Ajv = require("ajv");
 // import ts = require("typescript");
 
 import * as types from "./types";
-import { Project, ts } from "ts-morph";
+import { Project, SourceFile, ts } from "ts-morph";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
@@ -30,7 +30,6 @@ function main(): void {
 function tsdolly(args: { solution: string }): void {
     const solutionFile = fs.readFileSync(args.solution, { encoding: "utf-8" });
     const solutionsRaw: unknown = JSON.parse(solutionFile);
-    console.log(JSON.stringify((solutionsRaw as unknown[])[0], undefined, 4));
     const ajv = new Ajv();
     ajv.addSchema(SCHEMA, "types");
     if (!ajv.validate({ $ref: "types#/definitions/Solutions" }, solutionsRaw)) {
@@ -43,19 +42,52 @@ function tsdolly(args: { solution: string }): void {
     const results = analyzePrograms(project);
 
 
-    // Print reports
-    const jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
-    const compiling = count(results, r => !r.hasError);
-    console.log(`Total programs: ${programs.length}
-Total programs that compile: ${compiling}
-Compiling rate: ${compiling/programs.length * 100}%`);
-    console.log(jsonResults);
+    printResults(results);
 }
 
-function count<T>(arr: T[], pred: (elem: T) => boolean): number {
-    let total = 0;
-    arr.forEach(elem => { if (pred(elem)) total += 1 });
-    return total;
+interface Result {
+    path: string,
+    program: string,
+    hasError: boolean,
+    errors: string,
+    refactors: Set<string> // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
+};
+
+function printResults(results: Result[]): void {
+    const aggregate = aggregateResults(results);
+
+    console.log(`Total programs: ${aggregate.total}
+Total programs that compile: ${aggregate.compiling}
+Compiling rate: ${aggregate.compileRate * 100}%
+Average of available refactors: ${aggregate.refactorAvg}`);
+
+    const jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
+    console.log(`Results as JSON:\n\n${jsonResults}`);
+}
+
+interface AggregateResult {
+    total: number,
+    compiling: number,
+    compileRate: number,
+    refactorAvg: number,
+}
+
+function aggregateResults(results: Result[]): AggregateResult {
+    let compiling = 0;
+    let totalRefactors = 0;
+    for (const result of results) {
+        if (!result.hasError) {
+            compiling += 1;
+        }
+        totalRefactors += result.refactors.size;
+    }
+
+    return {
+        total: results.length,
+        compiling,
+        compileRate: compiling / results.length,
+        refactorAvg: totalRefactors / results.length,
+    }
 }
 
 function buildProject(programs: string[]): Project {
@@ -67,53 +99,40 @@ function buildProject(programs: string[]): Project {
     return project;
 }
 
-interface Result {
-    program: string,
-    hasError: boolean,
-    errors: string,
-};
-
 function analyzePrograms(project: Project): Result[] {
-    // Compilation. TODO: split into its own function
-    
+    const results: Result[] = [];
+    for (const sourceFile of project.getSourceFiles()) {
+        // Compiling info
+        const diagnostics = sourceFile.getPreEmitDiagnostics();
 
-    const defaultFileName = "file.ts";
-    const defaultHost = ts.createCompilerHost(options);
-    const host = {
-        ...defaultHost,
-        getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void, shouldCreateNewSourceFile?: boolean): ts.SourceFile | undefined {
-            if (fileName === defaultFileName) {
-                return ts.createSourceFile(defaultFileName, program, languageVersion);
-            }
-
-            return defaultHost.getSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile);
+        // Refactor info
+        const refactors: Set<string> = new Set();
+        for (let position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
+            const refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
+            refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
         }
-    };
-    const tsProgram = ts.createProgram(/* fileNames */ [defaultFileName], options, host);
-    const diagnostics = ts.getPreEmitDiagnostics(tsProgram);
-    const formattedDiagnostics = ts.formatDiagnosticsWithColorAndContext(diagnostics, host);
-    
 
-    // Language Service
-    const project = new Project({ compilerOptions: options });
-    project.getSourceFileOrThrow("foo").edits
-    project.getLanguageService().getEditsForRefactor
-    const service = ts.createLanguageService();
-    // TODO: try to apply some refactorings on programs that compile
-    const project = new Project({ useInMemoryFileSystem: true });
+        const result = {
+            path: sourceFile.getFilePath(),
+            program: sourceFile.getFullText(),
+            hasError: diagnostics.length > 0,
+            errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
+            refactors,
+        };
+        results.push(result);
+    }
 
+    return results;
+}
 
-    // Result
-    return {
-        program,
-        hasError: diagnostics.length > 0,
-        errors: formattedDiagnostics,
-    };
+function getApplicableRefactors(project: Project, file: SourceFile, position: number): ts.ApplicableRefactorInfo[] {
+    const languageService = project.getLanguageService();
+    return languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
 }
 
 function buildProgram(program: types.Program): string {    
     const declarations = ts.createNodeArray(program.declarations.map(buildDeclaration));
-    const file = ts.createSourceFile("../output/program.ts", "", ts.ScriptTarget.Latest, /*setParentNodes*/ false, ts.ScriptKind.TS); // TODO: refactor to use same options
+    const file = ts.createSourceFile("../output/program.ts", "", COMPILER_OPTIONS.target, /* setParentNodes */ false, ts.ScriptKind.TS); // TODO: refactor to use same options
     
     const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
     const result = printer.printList(ts.ListFormat.MultiLine, declarations, file);

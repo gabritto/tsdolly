@@ -1,22 +1,15 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 exports.__esModule = true;
 var yargs = require("yargs");
 var fs = require("fs");
 var Ajv = require("ajv");
-var ts = require("typescript");
+var ts_morph_1 = require("ts-morph");
 var SCHEMA = JSON.parse(fs.readFileSync("schema/types.json", { encoding: "utf-8" }));
-var ENTRY_ID = "Program$0";
+var COMPILER_OPTIONS = {
+    strict: true,
+    target: ts_morph_1.ts.ScriptTarget.Latest,
+    noEmit: true
+};
 function main() {
     var args = yargs
         .usage("To do")
@@ -30,7 +23,6 @@ function main() {
 function tsdolly(args) {
     var solutionFile = fs.readFileSync(args.solution, { encoding: "utf-8" });
     var solutionsRaw = JSON.parse(solutionFile);
-    console.log(JSON.stringify(solutionsRaw[0], undefined, 4));
     var ajv = new Ajv();
     ajv.addSchema(SCHEMA, "types");
     if (!ajv.validate({ $ref: "types#/definitions/Solutions" }, solutionsRaw)) {
@@ -39,48 +31,76 @@ function tsdolly(args) {
     var solutions = solutionsRaw;
     console.log(solutions.length + " solutions found");
     var programs = solutions.map(buildProgram);
-    var results = programs.map(analyzeProgram);
+    var project = buildProject(programs);
+    var results = analyzePrograms(project);
+    printResults(results);
+}
+;
+function printResults(results) {
+    var aggregate = aggregateResults(results);
+    console.log("Total programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%\nAverage of available refactors: " + aggregate.refactorAvg);
     var jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
-    var compiling = count(results, function (r) { return !r.hasError; });
-    console.log("Total programs: " + programs.length + "\nTotal programs that compile: " + compiling + "\nCompiling rate: " + compiling / programs.length * 100 + "%");
-    console.log(jsonResults);
-    // TODO: print reports
+    console.log("Results as JSON:\n\n" + jsonResults);
 }
-function count(arr, pred) {
-    var total = 0;
-    arr.forEach(function (elem) { if (pred(elem))
-        total += 1; });
-    return total;
-}
-function analyzeProgram(program) {
-    var options = {
-        strict: true,
-        target: ts.ScriptTarget.Latest,
-        noEmit: true
-    };
-    var defaultFileName = "file.ts";
-    var defaultHost = ts.createCompilerHost(options);
-    var host = __assign(__assign({}, defaultHost), { getSourceFile: function (fileName, languageVersion, onError, shouldCreateNewSourceFile) {
-            if (fileName === defaultFileName) {
-                return ts.createSourceFile(defaultFileName, program, languageVersion);
-            }
-            return defaultHost.getSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile);
-        } });
-    var tsProgram = ts.createProgram(/* fileNames */ [defaultFileName], options, host);
-    var diagnostics = ts.getPreEmitDiagnostics(tsProgram);
-    var formattedDiagnostics = ts.formatDiagnosticsWithColorAndContext(diagnostics, host);
+function aggregateResults(results) {
+    var compiling = 0;
+    var totalRefactors = 0;
+    for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
+        var result = results_1[_i];
+        if (!result.hasError) {
+            compiling += 1;
+        }
+        totalRefactors += result.refactors.size;
+    }
     return {
-        program: program,
-        hasError: diagnostics.length > 0,
-        errors: formattedDiagnostics
+        total: results.length,
+        compiling: compiling,
+        compileRate: compiling / results.length,
+        refactorAvg: totalRefactors / results.length
     };
-    // TODO: try to apply some refactorings on programs that compile
+}
+function buildProject(programs) {
+    var project = new ts_morph_1.Project({ compilerOptions: COMPILER_OPTIONS });
+    programs.forEach(function (program, index) {
+        project.createSourceFile("../output/programs/program_" + index + ".ts", program);
+    });
+    return project;
+}
+function analyzePrograms(project) {
+    var results = [];
+    var _loop_1 = function (sourceFile) {
+        // Compiling info
+        var diagnostics = sourceFile.getPreEmitDiagnostics();
+        // Refactor info
+        var refactors = new Set();
+        for (var position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
+            var refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
+            refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
+        }
+        var result = {
+            path: sourceFile.getFilePath(),
+            program: sourceFile.getFullText(),
+            hasError: diagnostics.length > 0,
+            errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
+            refactors: refactors
+        };
+        results.push(result);
+    };
+    for (var _i = 0, _a = project.getSourceFiles(); _i < _a.length; _i++) {
+        var sourceFile = _a[_i];
+        _loop_1(sourceFile);
+    }
+    return results;
+}
+function getApplicableRefactors(project, file, position) {
+    var languageService = project.getLanguageService();
+    return languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
 }
 function buildProgram(program) {
-    var declarations = ts.createNodeArray(program.declarations.map(buildDeclaration));
-    var file = ts.createSourceFile("../output/program.ts", "", ts.ScriptTarget.Latest, /*setParentNodes*/ false, ts.ScriptKind.TS); // TODO: refactor to use same options
-    var printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-    var result = printer.printList(ts.ListFormat.MultiLine, declarations, file);
+    var declarations = ts_morph_1.ts.createNodeArray(program.declarations.map(buildDeclaration));
+    var file = ts_morph_1.ts.createSourceFile("../output/program.ts", "", COMPILER_OPTIONS.target, /* setParentNodes */ false, ts_morph_1.ts.ScriptKind.TS); // TODO: refactor to use same options
+    var printer = ts_morph_1.ts.createPrinter({ newLine: ts_morph_1.ts.NewLineKind.LineFeed });
+    var result = printer.printList(ts_morph_1.ts.ListFormat.MultiLine, declarations, file);
     return result;
 }
 function buildDeclaration(declaration) {
@@ -93,7 +113,7 @@ function buildFunctionDecl(functionDecl) {
     var name = getIdentifier(functionDecl.name);
     var parameters = functionDecl.parameters.map(buildParameterDecl);
     var body = buildBlock(functionDecl.body);
-    return ts.createFunctionDeclaration(
+    return ts_morph_1.ts.createFunctionDeclaration(
     /* decorators */ undefined, 
     /* modifiers */ undefined, 
     /* asteriskToken */ undefined, 
@@ -106,7 +126,7 @@ function buildFunctionDecl(functionDecl) {
 function buildParameterDecl(parameterDecl) {
     var name = getIdentifier(parameterDecl.name);
     var type = buildType(parameterDecl.type);
-    return ts.createParameter(
+    return ts_morph_1.ts.createParameter(
     /* decorators */ undefined, 
     /* modifiers */ undefined, 
     /* dotDotToken */ undefined, 
@@ -125,14 +145,14 @@ function buildType(type) {
 function buildPrimType(type) {
     switch (type.nodeType) {
         case "TNumber":
-            return ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+            return ts_morph_1.ts.createKeywordTypeNode(ts_morph_1.ts.SyntaxKind.NumberKeyword);
         case "TString":
-            return ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+            return ts_morph_1.ts.createKeywordTypeNode(ts_morph_1.ts.SyntaxKind.StringKeyword);
     }
 }
 function buildBlock(block) {
     var statements = block.statements.map(buildStatement);
-    return ts.createBlock(
+    return ts_morph_1.ts.createBlock(
     /* statements */ statements, 
     /* multiline */ true);
 }
@@ -144,7 +164,7 @@ function buildStatement(statement) {
 }
 function buildExpressionStatement(expressionStatement) {
     var expression = buildExpression(expressionStatement.expression);
-    return ts.createExpressionStatement(expression);
+    return ts_morph_1.ts.createExpressionStatement(expression);
 }
 function buildExpression(expression) {
     switch (expression.nodeType) {
@@ -156,14 +176,14 @@ function buildExpression(expression) {
 }
 function buildVariableAccess(variableAccess) {
     var identifier = getIdentifier(variableAccess.variable);
-    return ts.createIdentifier(identifier);
+    return ts_morph_1.ts.createIdentifier(identifier);
 }
 function buildAssignmentExpression(assignmentExpression) {
     var left = buildVariableAccess(assignmentExpression.left);
     var right = buildExpression(assignmentExpression.right);
-    return ts.createBinary(
+    return ts_morph_1.ts.createBinary(
     /* left */ left, 
-    /* operator */ ts.SyntaxKind.EqualsToken, 
+    /* operator */ ts_morph_1.ts.SyntaxKind.EqualsToken, 
     /* right */ right);
 }
 function getIdentifier(identifier) {
