@@ -31,8 +31,7 @@ function tsdolly(args) {
     var solutions = solutionsRaw;
     console.log(solutions.length + " solutions found");
     var programs = solutions.map(buildProgram);
-    var project = buildProject(programs);
-    var results = analyzePrograms(project);
+    var results = analyzePrograms(programs);
     printResults(results);
 }
 ;
@@ -50,7 +49,7 @@ function aggregateResults(results) {
         if (!result.hasError) {
             compiling += 1;
         }
-        totalRefactors += result.refactors.size;
+        totalRefactors += result.refactors.length;
     }
     return {
         total: results.length,
@@ -59,38 +58,33 @@ function aggregateResults(results) {
         refactorAvg: totalRefactors / results.length
     };
 }
-function buildProject(programs) {
+function buildProject(program, filePath) {
     var project = new ts_morph_1.Project({ compilerOptions: COMPILER_OPTIONS });
-    programs.forEach(function (program, index) {
-        project.createSourceFile("../output/programs/program_" + index + ".ts", program);
-    });
+    project.createSourceFile(filePath, program);
     return project;
 }
-function analyzePrograms(project) {
-    var results = [];
-    var _loop_1 = function (sourceFile) {
-        // Compiling info
-        var diagnostics = sourceFile.getPreEmitDiagnostics();
-        // Refactor info
-        var refactors = new Set();
-        for (var position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
-            var refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
-            refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
-        }
-        var result = {
-            path: sourceFile.getFilePath(),
-            program: sourceFile.getFullText(),
-            hasError: diagnostics.length > 0,
-            errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
-            refactors: refactors
-        };
-        results.push(result);
-    };
-    for (var _i = 0, _a = project.getSourceFiles(); _i < _a.length; _i++) {
-        var sourceFile = _a[_i];
-        _loop_1(sourceFile);
+function analyzeProgram(program, index) {
+    var filePath = "../output/programs/program_" + index + ".ts";
+    var project = buildProject(program, filePath);
+    var sourceFile = project.getSourceFileOrThrow(filePath);
+    // Compiling info
+    var diagnostics = sourceFile.getPreEmitDiagnostics();
+    // Refactor info
+    var refactors = new Set();
+    for (var position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
+        var refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
+        refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
     }
-    return results;
+    return {
+        path: sourceFile.getFilePath(),
+        program: sourceFile.getFullText(),
+        hasError: diagnostics.length > 0,
+        errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
+        refactors: Array.from(refactors)
+    };
+}
+function analyzePrograms(programs) {
+    return programs.map(analyzeProgram);
 }
 function getApplicableRefactors(project, file, position) {
     var languageService = project.getLanguageService();

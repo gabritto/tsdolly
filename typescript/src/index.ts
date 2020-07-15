@@ -38,8 +38,7 @@ function tsdolly(args: { solution: string }): void {
     const solutions = solutionsRaw as types.Solutions;
     console.log(`${solutions.length} solutions found`);
     const programs = solutions.map(buildProgram);
-    const project = buildProject(programs);
-    const results = analyzePrograms(project);
+    const results = analyzePrograms(programs);
 
 
     printResults(results);
@@ -50,7 +49,7 @@ interface Result {
     program: string,
     hasError: boolean,
     errors: string,
-    refactors: Set<string> // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
+    refactors: string[], // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
 };
 
 function printResults(results: Result[]): void {
@@ -79,7 +78,7 @@ function aggregateResults(results: Result[]): AggregateResult {
         if (!result.hasError) {
             compiling += 1;
         }
-        totalRefactors += result.refactors.size;
+        totalRefactors += result.refactors.length;
     }
 
     return {
@@ -90,39 +89,38 @@ function aggregateResults(results: Result[]): AggregateResult {
     }
 }
 
-function buildProject(programs: string[]): Project {
+function buildProject(program: string, filePath: string): Project {
     const project = new Project({ compilerOptions: COMPILER_OPTIONS });
-    programs.forEach((program, index) => {
-        project.createSourceFile(`../output/programs/program_${index}.ts`, program);
-    });
-
+    project.createSourceFile(filePath, program);
     return project;
 }
 
-function analyzePrograms(project: Project): Result[] {
-    const results: Result[] = [];
-    for (const sourceFile of project.getSourceFiles()) {
-        // Compiling info
-        const diagnostics = sourceFile.getPreEmitDiagnostics();
+function analyzeProgram(program: string, index: number): Result {
+    const filePath = `../output/programs/program_${index}.ts`;
+    const project = buildProject(program, filePath);
+    const sourceFile = project.getSourceFileOrThrow(filePath);
 
-        // Refactor info
-        const refactors: Set<string> = new Set();
-        for (let position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
-            const refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
-            refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
-        }
+    // Compiling info
+    const diagnostics = sourceFile.getPreEmitDiagnostics();
 
-        const result = {
-            path: sourceFile.getFilePath(),
-            program: sourceFile.getFullText(),
-            hasError: diagnostics.length > 0,
-            errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
-            refactors,
-        };
-        results.push(result);
+    // Refactor info
+    const refactors: Set<string> = new Set();
+    for (let position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
+        const refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
+        refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
     }
 
-    return results;
+    return {
+        path: sourceFile.getFilePath(),
+        program: sourceFile.getFullText(),
+        hasError: diagnostics.length > 0,
+        errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
+        refactors: Array.from(refactors),
+    };
+}
+
+function analyzePrograms(programs: string[]): Result[] {
+    return programs.map(analyzeProgram);
 }
 
 function getApplicableRefactors(project: Project, file: SourceFile, position: number): ts.ApplicableRefactorInfo[] {
