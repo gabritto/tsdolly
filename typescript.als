@@ -1,5 +1,9 @@
 -- Basics
-sig Identifier {} -- TODO: should identifiers be different for each node that has one? This is allowed in TS but might generate weird examples or increase complexity
+abstract sig Identifier {}
+sig FunctionIdentifier extends Identifier {}
+sig ParameterIdentifier extends Identifier {}
+
+
 
 one sig Program {
 	declarations: set Declaration
@@ -12,15 +16,10 @@ fact DeclarationParent {
 }
 
 sig FunctionDecl extends Declaration {
-	name: one Identifier, -- TODO: should name belong to "Declaration"?
+	name: one FunctionIdentifier, -- TODO: should name belong to "Declaration"?
 	parameters: set ParameterDecl,
 	body: one Block --,
 	-- returnType: lone Type -- Remove this to reduce compilation errors
-}
-
-fact UniqueParameterNames {
-	all f: FunctionDecl, p1, p2: f.parameters | p1 != p2 => p1.name != p2.name
-	-- Parameters of a given function have different names
 }
 
 fact UniqueFunctionNames { -- TODO: have "name" be part of Declaration and then place uniqueness constraint on name?
@@ -28,21 +27,23 @@ fact UniqueFunctionNames { -- TODO: have "name" be part of Declaration and then 
 }
 
 sig ParameterDecl {
-	name: one Identifier,
+	name: one ParameterIdentifier,
 	type: one Type, -- Must have a type annotation (simplifying for strict mode use)
+}
+
+fact UniqueParameterNames {
+	all f: FunctionDecl, p1, p2: f.parameters | p1 != p2 => p1.name != p2.name
+	-- Parameters of a given function have different names
 }
 
 fact ParameterDeclParent {
 	all p: ParameterDecl | one f: FunctionDecl | p in f.parameters
 }
 
+-- Statements & Expressions
 sig Block {
 	statements: set Statement
 }
-
-//sig FunctionBlock extends Block {
-//	return: one Expression
-//}
 
 fact BlockParent {
 	all b: Block | one f: FunctionDecl | b in f.body
@@ -58,7 +59,9 @@ abstract sig Expression {}
 
 fact ExpressionParent {
 	all e: Expression {
-		(one s: Statement | e in s.expression) or (one e_other: Expression | (e in e_other.left) or (e in e_other.right))
+		(one s: Statement | e in s.expression) or
+		(one e_other: Expression | (e in e_other.left) or (e in e_other.right)) or
+		(one c: FunctionCall | e in c.arguments)
 	}
 }
 
@@ -76,7 +79,24 @@ fact AssignmentExpressionNoCycle {
 }
 
 sig VariableAccess extends Expression {
-	variable: one Identifier -- TODO: assert identifier is declared
+	variable: one ParameterIdentifier
+}
+
+fact LeftVariableExists { -- TODO: refactor if we add another way to declare vars
+	all a: AssignmentExpression | some p: ParameterDecl | a.left.variable = p.name
+}
+
+sig FunctionCall extends Expression {
+	name: one FunctionIdentifier,
+	arguments: set VariableAccess
+}
+
+fact FunctionCalledExists {
+	all c: FunctionCall | some f: FunctionDecl | c.name = f.name
+}
+
+fact FunctionCallArity {
+	all c: FunctionCall, f: FunctionDecl | c.name = f.name => #c.arguments = #f.parameters
 }
 
 //sig BinaryExpression extends Expression {
@@ -91,14 +111,23 @@ sig VariableAccess extends Expression {
 -- Types
 abstract sig Type {}
 abstract sig PrimType extends Type {}
-// TODO: use this later for extract type refactoring
-//sig InterfaceType extends Type {}
-//sig ObjectLiteralType extends Type {}
 one sig TNumber extends PrimType {}
 one sig TString extends PrimType {}
 
--- Testing
+// TODO: use this later for extract type refactoring
+//sig InterfaceType extends Type {}
+//sig ObjectLiteralType extends Type {}
+
+-- Commands
 pred show {}
-//run show for 3 but exactly 1 FunctionDecl, exactly 2 ParameterDecl, exactly 2 Identifier
-run show for 2 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, 3 Identifier
+run show for 3 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, exactly 1 FunctionCall
+
+pred ConvertFunction {
+	all f: FunctionDecl {
+		#f.parameters > 1
+	}
+}
+
+run ConvertFunction for 2 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, 3 Identifier
+
 
