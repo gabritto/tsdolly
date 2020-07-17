@@ -119,8 +119,8 @@ one sig TString extends PrimType {}
 //sig ObjectLiteralType extends Type {}
 
 -- Commands
-pred show {}
-run show for 3 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, exactly 1 FunctionCall
+pred default {}
+run default for 3 but exactly 2 ParameterDecl, exactly 1 FunctionDecl, exactly 1 FunctionCall
 
 pred ConvertFunction {
 	all f: FunctionDecl {
