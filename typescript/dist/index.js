@@ -166,6 +166,8 @@ function buildExpression(expression) {
             return buildVariableAccess(expression);
         case "AssignmentExpression":
             return buildAssignmentExpression(expression);
+        case "FunctionCall":
+            return buildFunctionCall(expression);
     }
 }
 function buildVariableAccess(variableAccess) {
@@ -180,8 +182,23 @@ function buildAssignmentExpression(assignmentExpression) {
     /* operator */ ts_morph_1.ts.SyntaxKind.EqualsToken, 
     /* right */ right);
 }
+function buildFunctionCall(functionCall) {
+    var identifier = ts_morph_1.ts.createIdentifier(getIdentifier(functionCall.name));
+    var args = functionCall.arguments.map(buildExpression);
+    return ts_morph_1.ts.createCall(
+    /* expression */ identifier, 
+    /* typeArguments */ undefined, 
+    /* argumentsArray */ args);
+}
 function getIdentifier(identifier) {
-    return identifier.nodeId; // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
+    // switch (identifier.nodeType) {
+    //     case "FunctionIdentifier":
+    //         return `function${identifier.nodeId}`
+    //     case "ParameterIdentifier":
+    //         return `param${identifier.nodeId}`
+    // }
+    return identifier.nodeId;
+    // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
 }
 if (!module.parent) {
     main();

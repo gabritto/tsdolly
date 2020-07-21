@@ -5,8 +5,14 @@ export interface Node {
     nodeType: string
 }
 
-export interface Identifier extends Node {
-    nodeType: "Identifier"
+export type Identifier = FunctionIdentifier | ParameterIdentifier;
+
+export interface FunctionIdentifier extends Node {
+    nodeType: "FunctionIdentifier"
+}
+
+export interface ParameterIdentifier extends Node {
+    nodeType: "ParameterIdentifier"
 }
 
 export interface Program extends Node {
@@ -18,7 +24,7 @@ export type Declaration = FunctionDecl;
 
 export interface FunctionDecl extends Node {
     nodeType: "FunctionDecl",
-    name: Identifier,
+    name: FunctionIdentifier,
     parameters: ParameterDecl[],
     body: Block,
     // returnType: Maybe<Type>
@@ -26,7 +32,7 @@ export interface FunctionDecl extends Node {
 
 export interface ParameterDecl extends Node {
     nodeType: "ParameterDecl",
-    name: Identifier,
+    name: ParameterIdentifier,
     type: Type
 }
 
@@ -42,7 +48,7 @@ export interface ExpressionStatement extends Node {
     expression: Expression
 }
 
-export type Expression = AssignmentExpression | VariableAccess;
+export type Expression = AssignmentExpression | VariableAccess | FunctionCall;
 
 export interface AssignmentExpression extends Node {
     nodeType: "AssignmentExpression",
@@ -52,7 +58,13 @@ export interface AssignmentExpression extends Node {
 
 export interface VariableAccess extends Node {
     nodeType: "VariableAccess",
-    variable: Identifier
+    variable: ParameterIdentifier
+}
+
+export interface FunctionCall extends Node {
+    nodeType: "FunctionCall",
+    name: FunctionIdentifier,
+    arguments: VariableAccess[]
 }
 
 export type Type = PrimType // | InterfaceType | ObjectLiteralType;

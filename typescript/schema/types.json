@@ -64,6 +64,9 @@
         },
         {
           "$ref": "#/definitions/VariableAccess"
+        },
+        {
+          "$ref": "#/definitions/FunctionCall"
         }
       ]
     },
@@ -90,6 +93,36 @@
       ],
       "type": "object"
     },
+    "FunctionCall": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "items": {
+            "$ref": "#/definitions/VariableAccess"
+          },
+          "type": "array"
+        },
+        "name": {
+          "$ref": "#/definitions/FunctionIdentifier"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "FunctionCall"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "arguments",
+        "name",
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
     "FunctionDecl": {
       "additionalProperties": false,
       "properties": {
@@ -97,7 +130,7 @@
           "$ref": "#/definitions/Block"
         },
         "name": {
-          "$ref": "#/definitions/Identifier"
+          "$ref": "#/definitions/FunctionIdentifier"
         },
         "nodeId": {
           "type": "string"
@@ -124,7 +157,7 @@
       ],
       "type": "object"
     },
-    "Identifier": {
+    "FunctionIdentifier": {
       "additionalProperties": false,
       "properties": {
         "nodeId": {
@@ -132,7 +165,7 @@
         },
         "nodeType": {
           "enum": [
-            "Identifier"
+            "FunctionIdentifier"
           ],
           "type": "string"
         }
@@ -142,6 +175,16 @@
         "nodeType"
       ],
       "type": "object"
+    },
+    "Identifier": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FunctionIdentifier"
+        },
+        {
+          "$ref": "#/definitions/ParameterIdentifier"
+        }
+      ]
     },
     "Node": {
       "additionalProperties": false,
@@ -163,7 +206,7 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "$ref": "#/definitions/Identifier"
+          "$ref": "#/definitions/ParameterIdentifier"
         },
         "nodeId": {
           "type": "string"
@@ -183,6 +226,25 @@
         "nodeId",
         "nodeType",
         "type"
+      ],
+      "type": "object"
+    },
+    "ParameterIdentifier": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "ParameterIdentifier"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
       ],
       "type": "object"
     },
@@ -285,7 +347,7 @@
           "type": "string"
         },
         "variable": {
-          "$ref": "#/definitions/Identifier"
+          "$ref": "#/definitions/ParameterIdentifier"
         }
       },
       "required": [

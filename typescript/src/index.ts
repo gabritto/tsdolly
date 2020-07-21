@@ -17,7 +17,7 @@ const COMPILER_OPTIONS = {
 
 function main(): void {
     const args = yargs
-        .usage("To do")
+        .usage("To do") // TODO: write usage
         .option("solution", {
             describe: "Path to file containing the Alloy metamodel solutions",
             type: "string",
@@ -221,6 +221,8 @@ function buildExpression(expression: types.Expression): ts.Expression {
             return buildVariableAccess(expression);
         case "AssignmentExpression":
             return buildAssignmentExpression(expression);
+        case "FunctionCall":
+            return buildFunctionCall(expression);
     }
 }
 
@@ -241,8 +243,25 @@ function buildAssignmentExpression(assignmentExpression: types.AssignmentExpress
     );
 }
 
+function buildFunctionCall(functionCall: types.FunctionCall): ts.CallExpression {
+    const identifier = ts.createIdentifier(getIdentifier(functionCall.name));
+    const args = functionCall.arguments.map(buildExpression);
+    return ts.createCall(
+        /* expression */ identifier,
+        /* typeArguments */ undefined,
+        /* argumentsArray */ args
+    );
+}
+
 function getIdentifier(identifier: types.Identifier): string {
-    return identifier.nodeId; // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
+    // switch (identifier.nodeType) {
+    //     case "FunctionIdentifier":
+    //         return `function${identifier.nodeId}`
+    //     case "ParameterIdentifier":
+    //         return `param${identifier.nodeId}`
+    // }
+    return identifier.nodeId;
+    // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
 }
 
 if (!module.parent) {
