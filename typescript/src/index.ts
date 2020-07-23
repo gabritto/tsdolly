@@ -4,7 +4,7 @@ import Ajv = require("ajv");
 // import ts = require("typescript");
 
 import * as types from "./types";
-import { Project, SourceFile, ts } from "ts-morph";
+import { Project, SourceFile, ts, HeritageClause } from "ts-morph";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
@@ -96,6 +96,7 @@ function buildProject(program: string, filePath: string): Project {
 }
 
 function analyzeProgram(program: string, index: number): Result {
+    console.log(`Starting to analyze program ${index}`);
     const filePath = `../output/programs/program_${index}.ts`;
     const project = buildProject(program, filePath);
     const sourceFile = project.getSourceFileOrThrow(filePath);
@@ -110,6 +111,7 @@ function analyzeProgram(program: string, index: number): Result {
         refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
     }
 
+    console.log(`Finished analyzing program ${index}`);
     return {
         path: sourceFile.getFilePath(),
         program: sourceFile.getFullText(),
@@ -137,10 +139,12 @@ function buildProgram(program: types.Program): string {
     return result;
 }
 
-function buildDeclaration(declaration: types.Declaration): ts.FunctionDeclaration {
+function buildDeclaration(declaration: types.Declaration): ts.Declaration {
     switch (declaration.nodeType) {
         case "FunctionDecl":
             return buildFunctionDecl(declaration);
+        case "ClassDecl":
+            return buildClassDecl(declaration);
     }
 }
 
@@ -154,6 +158,52 @@ function buildFunctionDecl(functionDecl: types.FunctionDecl): ts.FunctionDeclara
         /* modifiers */ undefined,
         /* asteriskToken */ undefined,
         /* name */ name,
+        /* typeParameters */ undefined,
+        /* parameters */ parameters,
+        /* type */ undefined,
+        /* body */ body
+        );
+}
+
+function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
+    const name = getIdentifier(classDecl.name);
+    const heritageClauses: ts.HeritageClause[] = [];
+    if (classDecl.extends != null) {
+        const parentClassName = getIdentifier(classDecl.extends.name);
+        const parentClass = ts.createExpressionWithTypeArguments(
+            /* typeArguments */ undefined,
+            /* expression */ ts.createIdentifier(parentClassName)
+        );
+        const heritageClause = ts.createHeritageClause(
+            /* token */ ts.SyntaxKind.ExtendsKeyword,
+            /* types */ [parentClass]
+        );
+        heritageClauses.push(heritageClause);
+    }
+
+    const methods = classDecl.methods.map(buildMethodDecl);
+
+    return ts.createClassDeclaration(
+        /* decorators */ undefined,
+        /* modifiers */ undefined,
+        /* name */ name,
+        /* typeParameters */ undefined,
+        /* heritageClauses */ heritageClauses,
+        /* members */ methods
+    );
+}
+
+function buildMethodDecl(methodDecl: types.MethodDecl): ts.MethodDeclaration {
+    const name = getIdentifier(methodDecl.name);
+    const parameters: ts.ParameterDeclaration[] = methodDecl.parameters.map(buildParameterDecl);
+    const body: ts.Block = buildBlock(methodDecl.body);
+
+    return ts.createMethod(
+        /* decorators */ undefined,
+        /* modifiers */ undefined,
+        /* asteriskToken */ undefined,
+        /* name */ name,
+        /* questionToken */ undefined,
         /* typeParameters */ undefined,
         /* parameters */ parameters,
         /* type */ undefined,
@@ -223,6 +273,8 @@ function buildExpression(expression: types.Expression): ts.Expression {
             return buildAssignmentExpression(expression);
         case "FunctionCall":
             return buildFunctionCall(expression);
+        case "StringConcat":
+            return buildStringConcat(expression);
     }
 }
 
@@ -253,6 +305,40 @@ function buildFunctionCall(functionCall: types.FunctionCall): ts.CallExpression 
     );
 }
 
+function buildStringConcat(stringConcat: types.StringConcat): ts.Expression {
+    return buildStringConcatWorker(stringConcat.concat);
+}
+
+function buildStringConcatWorker(strings: (types.StringLiteral | types.VariableAccess)[]): ts.Expression {
+    if (strings.length === 0) {
+        throw new Error("Expected at least one element in string concat array");
+    }
+    if (strings.length == 1) {
+        const [s] = strings;
+        return buildStringConcatElement(s);
+    }
+
+    const [s, ...rest] = strings;
+    return ts.createBinary(
+        /* left */ buildStringConcatElement(s),
+        /* operator */ ts.SyntaxKind.PlusToken,
+        /* right */ buildStringConcatWorker(rest)
+    );
+}
+
+function buildStringConcatElement(s: types.StringLiteral | types.VariableAccess): ts.Expression {
+    switch (s.nodeType) {
+        case "String":
+            return buildStringLiteral(s);
+        case "VariableAccess":
+            return buildVariableAccess(s); // TODO: do we need to parenthesize those?
+    }
+}
+
+function buildStringLiteral(stringLiteral: types.StringLiteral): ts.StringLiteral {
+    return ts.createStringLiteral(stringLiteral.nodeId);
+}
+
 function getIdentifier(identifier: types.Identifier): string {
     // switch (identifier.nodeType) {
     //     case "FunctionIdentifier":
@@ -261,7 +347,7 @@ function getIdentifier(identifier: types.Identifier): string {
     //         return `param${identifier.nodeId}`
     // }
     return identifier.nodeId;
-    // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
+    // TODO: prettify names
 }
 
 if (!module.parent) {

@@ -12,7 +12,7 @@ var COMPILER_OPTIONS = {
 };
 function main() {
     var args = yargs
-        .usage("To do")
+        .usage("To do") // TODO: write usage
         .option("solution", {
         describe: "Path to file containing the Alloy metamodel solutions",
         type: "string",
@@ -64,6 +64,7 @@ function buildProject(program, filePath) {
     return project;
 }
 function analyzeProgram(program, index) {
+    console.log("Starting to analyze program " + index);
     var filePath = "../output/programs/program_" + index + ".ts";
     var project = buildProject(program, filePath);
     var sourceFile = project.getSourceFileOrThrow(filePath);
@@ -75,6 +76,7 @@ function analyzeProgram(program, index) {
         var refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
         refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
     }
+    console.log("Finished analyzing program " + index);
     return {
         path: sourceFile.getFilePath(),
         program: sourceFile.getFullText(),
@@ -101,6 +103,8 @@ function buildDeclaration(declaration) {
     switch (declaration.nodeType) {
         case "FunctionDecl":
             return buildFunctionDecl(declaration);
+        case "ClassDecl":
+            return buildClassDecl(declaration);
     }
 }
 function buildFunctionDecl(functionDecl) {
@@ -112,6 +116,43 @@ function buildFunctionDecl(functionDecl) {
     /* modifiers */ undefined, 
     /* asteriskToken */ undefined, 
     /* name */ name, 
+    /* typeParameters */ undefined, 
+    /* parameters */ parameters, 
+    /* type */ undefined, 
+    /* body */ body);
+}
+function buildClassDecl(classDecl) {
+    var name = getIdentifier(classDecl.name);
+    var heritageClauses = [];
+    if (classDecl["extends"] != null) {
+        var parentClassName = getIdentifier(classDecl["extends"].name);
+        var parentClass = ts_morph_1.ts.createExpressionWithTypeArguments(
+        /* typeArguments */ undefined, 
+        /* expression */ ts_morph_1.ts.createIdentifier(parentClassName));
+        var heritageClause = ts_morph_1.ts.createHeritageClause(
+        /* token */ ts_morph_1.ts.SyntaxKind.ExtendsKeyword, 
+        /* types */ [parentClass]);
+        heritageClauses.push(heritageClause);
+    }
+    var methods = classDecl.methods.map(buildMethodDecl);
+    return ts_morph_1.ts.createClassDeclaration(
+    /* decorators */ undefined, 
+    /* modifiers */ undefined, 
+    /* name */ name, 
+    /* typeParameters */ undefined, 
+    /* heritageClauses */ heritageClauses, 
+    /* members */ methods);
+}
+function buildMethodDecl(methodDecl) {
+    var name = getIdentifier(methodDecl.name);
+    var parameters = methodDecl.parameters.map(buildParameterDecl);
+    var body = buildBlock(methodDecl.body);
+    return ts_morph_1.ts.createMethod(
+    /* decorators */ undefined, 
+    /* modifiers */ undefined, 
+    /* asteriskToken */ undefined, 
+    /* name */ name, 
+    /* questionToken */ undefined, 
     /* typeParameters */ undefined, 
     /* parameters */ parameters, 
     /* type */ undefined, 
@@ -168,6 +209,8 @@ function buildExpression(expression) {
             return buildAssignmentExpression(expression);
         case "FunctionCall":
             return buildFunctionCall(expression);
+        case "StringConcat":
+            return buildStringConcat(expression);
     }
 }
 function buildVariableAccess(variableAccess) {
@@ -190,6 +233,34 @@ function buildFunctionCall(functionCall) {
     /* typeArguments */ undefined, 
     /* argumentsArray */ args);
 }
+function buildStringConcat(stringConcat) {
+    return buildStringConcatWorker(stringConcat.concat);
+}
+function buildStringConcatWorker(strings) {
+    if (strings.length === 0) {
+        throw new Error("Expected at least one element in string concat array");
+    }
+    if (strings.length == 1) {
+        var s_1 = strings[0];
+        return buildStringConcatElement(s_1);
+    }
+    var s = strings[0], rest = strings.slice(1);
+    return ts_morph_1.ts.createBinary(
+    /* left */ buildStringConcatElement(s), 
+    /* operator */ ts_morph_1.ts.SyntaxKind.PlusToken, 
+    /* right */ buildStringConcatWorker(rest));
+}
+function buildStringConcatElement(s) {
+    switch (s.nodeType) {
+        case "String":
+            return buildStringLiteral(s);
+        case "VariableAccess":
+            return buildVariableAccess(s); // TODO: do we need to parenthesize those?
+    }
+}
+function buildStringLiteral(stringLiteral) {
+    return ts_morph_1.ts.createStringLiteral(stringLiteral.nodeId);
+}
 function getIdentifier(identifier) {
     // switch (identifier.nodeType) {
     //     case "FunctionIdentifier":
@@ -198,7 +269,7 @@ function getIdentifier(identifier) {
     //         return `param${identifier.nodeId}`
     // }
     return identifier.nodeId;
-    // TODO: prettify name; add pretty name generator to class (e.g. use alphabet letters...)
+    // TODO: prettify names
 }
 if (!module.parent) {
     main();

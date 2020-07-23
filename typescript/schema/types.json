@@ -54,8 +54,67 @@
       ],
       "type": "object"
     },
+    "ClassDecl": {
+      "additionalProperties": false,
+      "properties": {
+        "extends": {
+          "$ref": "#/definitions/ClassDecl"
+        },
+        "methods": {
+          "items": {
+            "$ref": "#/definitions/MethodDecl"
+          },
+          "type": "array"
+        },
+        "name": {
+          "$ref": "#/definitions/ClassIdentifier"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "ClassDecl"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "methods",
+        "name",
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "ClassIdentifier": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "ClassIdentifier"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
     "Declaration": {
-      "$ref": "#/definitions/FunctionDecl"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FunctionDecl"
+        },
+        {
+          "$ref": "#/definitions/ClassDecl"
+        }
+      ]
     },
     "Expression": {
       "anyOf": [
@@ -67,6 +126,9 @@
         },
         {
           "$ref": "#/definitions/FunctionCall"
+        },
+        {
+          "$ref": "#/definitions/StringConcat"
         }
       ]
     },
@@ -183,8 +245,67 @@
         },
         {
           "$ref": "#/definitions/ParameterIdentifier"
+        },
+        {
+          "$ref": "#/definitions/ClassIdentifier"
+        },
+        {
+          "$ref": "#/definitions/MethodIdentifier"
         }
       ]
+    },
+    "MethodDecl": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/Block"
+        },
+        "name": {
+          "$ref": "#/definitions/MethodIdentifier"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "MethodDecl"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/ParameterDecl"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "body",
+        "name",
+        "nodeId",
+        "nodeType",
+        "parameters"
+      ],
+      "type": "object"
+    },
+    "MethodIdentifier": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "MethodIdentifier"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
     },
     "Node": {
       "additionalProperties": false,
@@ -292,6 +413,58 @@
     },
     "Statement": {
       "$ref": "#/definitions/ExpressionStatement"
+    },
+    "StringConcat": {
+      "additionalProperties": false,
+      "properties": {
+        "concat": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringLiteral"
+              },
+              {
+                "$ref": "#/definitions/VariableAccess"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "StringConcat"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "concat",
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    "StringLiteral": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "String"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId",
+        "nodeType"
+      ],
+      "type": "object"
     },
     "TNumber": {
       "additionalProperties": false,

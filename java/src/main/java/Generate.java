@@ -9,10 +9,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import tsdolly.Program;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -29,14 +26,22 @@ public class Generate implements Callable<Integer> {
     @Option(names = {"-o", "--output"}, description = "output file", defaultValue = "../output/alloySolutions.json")
     private File outputPath;
 
-    private static JsonArray getAllSolutions(A4Solution solution) {
-        var solutionsJson = new JsonArray();
+    private static void writeAllSolutions(A4Solution solution, OutputStreamWriter writer) throws IOException {
+        int solutionsCount = 0;
+        writer.write("[\n");
         while (solution.satisfiable()) {
             var p = new Program(solution);
-            solutionsJson.add(p.toJson());
+            var solutionJson = p.toJson();
+            if (solutionsCount > 0) {
+                writer.write(",\n");
+            }
+            System.out.println(String.format("Writing solution %d...", solutionsCount));
+            writer.write(solutionJson.toString());
             solution = solution.next();
+            solutionsCount += 1;
         }
-        return solutionsJson;
+        writer.write("\n]");
+        System.out.println(String.format("Total solutions: %d", solutionsCount));
     }
 
     private static A4Reporter createA4Reporter() { // TODO: review this
@@ -68,11 +73,10 @@ public class Generate implements Callable<Integer> {
 
         System.out.println(String.format("Running command '%s'", cmd.label));
         var solution = TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options);
-        var solutionsJson = getAllSolutions(solution);
         try (OutputStreamWriter writer =
-                     new OutputStreamWriter(new FileOutputStream(this.outputPath), StandardCharsets.UTF_8)) {
-            System.out.println(String.format("Writing %d solutions", solutionsJson.size()));
-            writer.write(solutionsJson.toString());
+                     new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(this.outputPath)),
+                             StandardCharsets.UTF_8)) {
+            writeAllSolutions(solution, writer);
         }
         return 0;
     }
