@@ -57,7 +57,7 @@
     "ClassDecl": {
       "additionalProperties": false,
       "properties": {
-        "extends": {
+        "extend": {
           "$ref": "#/definitions/ClassDecl"
         },
         "methods": {
@@ -455,7 +455,7 @@
         },
         "nodeType": {
           "enum": [
-            "String"
+            "StringLiteral"
           ],
           "type": "string"
         }

@@ -46,7 +46,7 @@ export interface FunctionDecl extends Node {
 export interface ClassDecl extends Node {
     nodeType: "ClassDecl",
     name: ClassIdentifier,
-    extends?: ClassDecl,
+    extend?: ClassDecl,
     methods: MethodDecl[],
 }
 
@@ -104,7 +104,7 @@ export interface StringConcat extends Node {
 }
 
 export interface StringLiteral extends Node {
-    nodeType: "String",
+    nodeType: "StringLiteral",
 }
 
 export type Type = PrimType // | InterfaceType | ObjectLiteralType;

@@ -168,8 +168,8 @@ function buildFunctionDecl(functionDecl: types.FunctionDecl): ts.FunctionDeclara
 function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
     const name = getIdentifier(classDecl.name);
     const heritageClauses: ts.HeritageClause[] = [];
-    if (classDecl.extends != null) {
-        const parentClassName = getIdentifier(classDecl.extends.name);
+    if (classDecl.extend != null) {
+        const parentClassName = getIdentifier(classDecl.extend.name);
         const parentClass = ts.createExpressionWithTypeArguments(
             /* typeArguments */ undefined,
             /* expression */ ts.createIdentifier(parentClassName)
@@ -328,7 +328,7 @@ function buildStringConcatWorker(strings: (types.StringLiteral | types.VariableA
 
 function buildStringConcatElement(s: types.StringLiteral | types.VariableAccess): ts.Expression {
     switch (s.nodeType) {
-        case "String":
+        case "StringLiteral":
             return buildStringLiteral(s);
         case "VariableAccess":
             return buildVariableAccess(s); // TODO: do we need to parenthesize those?

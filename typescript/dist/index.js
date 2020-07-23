@@ -124,8 +124,8 @@ function buildFunctionDecl(functionDecl) {
 function buildClassDecl(classDecl) {
     var name = getIdentifier(classDecl.name);
     var heritageClauses = [];
-    if (classDecl["extends"] != null) {
-        var parentClassName = getIdentifier(classDecl["extends"].name);
+    if (classDecl.extend != null) {
+        var parentClassName = getIdentifier(classDecl.extend.name);
         var parentClass = ts_morph_1.ts.createExpressionWithTypeArguments(
         /* typeArguments */ undefined, 
         /* expression */ ts_morph_1.ts.createIdentifier(parentClassName));
@@ -252,7 +252,7 @@ function buildStringConcatWorker(strings) {
 }
 function buildStringConcatElement(s) {
     switch (s.nodeType) {
-        case "String":
+        case "StringLiteral":
             return buildStringLiteral(s);
         case "VariableAccess":
             return buildVariableAccess(s); // TODO: do we need to parenthesize those?

@@ -178,7 +178,7 @@ pred ConvertToTemplateString {
 		some v: VariableAccess | v in s.concat
 	}
 }
-run ConvertToTemplateString for 3
+run ConvertToTemplateString for 2 but 3 StringLiteral, 3 VariableAccess
 
 
 
