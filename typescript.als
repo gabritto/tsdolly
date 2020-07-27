@@ -116,8 +116,15 @@ sig VariableAccess extends Expression {
 	variable: one ParameterIdentifier
 }
 
-fact LeftVariableExists { -- TODO: refactor if we add another way to declare vars
-	all a: AssignmentExpression | some p: ParameterDecl | a.left.variable = p.name
+// A variable accessed in the scope of a function or method body should exist.
+// That is, there should be a function/method parameter with that same identifier.
+fact ValidVariableAccess {
+	all f: FunctionDecl, v: VariableAccess {
+		(v in f.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in f.parameters.name)
+	}
+	all m: MethodDecl, v: VariableAccess {
+		(v in m.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in m.parameters.name)
+	}
 }
 
 sig FunctionCall extends Expression {
@@ -178,7 +185,7 @@ pred ConvertToTemplateString {
 		some v: VariableAccess | v in s.concat
 	}
 }
-run ConvertToTemplateString for 2 but 3 StringLiteral, 3 VariableAccess
+run ConvertToTemplateString for 2
 
 
 

@@ -15,20 +15,37 @@ const COMPILER_OPTIONS = {
     noEmit: true,
 };
 
+interface CliOpts {
+    solution: string,
+    refactorings: boolean,
+    result: string,
+}
+
 function main(): void {
-    const args = yargs
+    const opts = yargs
         .usage("To do") // TODO: write usage
         .option("solution", {
             describe: "Path to file containing the Alloy metamodel solutions",
             type: "string",
             default: "../output/alloySolutions.json",
-        }).argv;
+        })
+        .option("refactorings", {
+            describe: "Check which refactorings can be applied",
+            type: "boolean",
+            default: false,
+        })
+        .option("result", {
+            describe: "Path to file where results should be saved",
+            type: "string",
+            default: "logs/results.json"
+        })
+        .argv;
 
-    tsdolly(args);
+    tsdolly(opts);
 }
 
-function tsdolly(args: { solution: string }): void {
-    const solutionFile = fs.readFileSync(args.solution, { encoding: "utf-8" });
+function tsdolly(opts: CliOpts): void {
+    const solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     const solutionsRaw: unknown = JSON.parse(solutionFile);
     const ajv = new Ajv();
     ajv.addSchema(SCHEMA, "types");
@@ -38,54 +55,63 @@ function tsdolly(args: { solution: string }): void {
     const solutions = solutionsRaw as types.Solutions;
     console.log(`${solutions.length} solutions found`);
     const programs = solutions.map(buildProgram);
-    const results = analyzePrograms(programs);
+    const results = analyzePrograms(programs, opts);
 
 
-    printResults(results);
+    printResults(results, opts);
 }
 
-interface Result {
+export interface Result {
     path: string,
     program: string,
     hasError: boolean,
     errors: string,
-    refactors: string[], // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
+    refactors?: string[], // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
 };
 
-function printResults(results: Result[]): void {
-    const aggregate = aggregateResults(results);
+function printResults(results: Result[], opts: CliOpts): void {
+    const aggregate = aggregateResults(results, opts.refactorings);
 
     console.log(`Total programs: ${aggregate.total}
 Total programs that compile: ${aggregate.compiling}
-Compiling rate: ${aggregate.compileRate * 100}%
-Average of available refactors: ${aggregate.refactorAvg}`);
+Compiling rate: ${aggregate.compileRate * 100}%`);
+    if (opts.refactorings) {
+        console.log(`Average of available refactors: ${aggregate.refactorAvg}`);
+    }
 
     const jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
-    console.log(`Results as JSON:\n\n${jsonResults}`);
+    try {
+        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf8" });
+        console.log(`Results JSON written to ${opts.result}`);
+    } catch (error) {
+        console.log(`Error ${error} found while writing results to file ${opts.result}.\n\tResults:\n ${jsonResults}`);
+    }
 }
 
 interface AggregateResult {
     total: number,
     compiling: number,
     compileRate: number,
-    refactorAvg: number,
+    refactorAvg?: number,
 }
 
-function aggregateResults(results: Result[]): AggregateResult {
+function aggregateResults(results: Result[], refactorings: CliOpts["refactorings"]): AggregateResult {
     let compiling = 0;
     let totalRefactors = 0;
     for (const result of results) {
         if (!result.hasError) {
             compiling += 1;
         }
-        totalRefactors += result.refactors.length;
+        if (refactorings) {
+            totalRefactors += result.refactors!.length; // TODO: get rid of bang, improve typing
+        }
     }
 
     return {
         total: results.length,
         compiling,
         compileRate: compiling / results.length,
-        refactorAvg: totalRefactors / results.length,
+        refactorAvg: refactorings ? totalRefactors / results.length : undefined,
     }
 }
 
@@ -95,7 +121,11 @@ function buildProject(program: string, filePath: string): Project {
     return project;
 }
 
-function analyzeProgram(program: string, index: number): Result {
+function analyzePrograms(programs: string[], opts: CliOpts): Result[] {
+    return programs.map((program, index) => analyzeProgram(program, index, opts.refactorings));
+}
+
+function analyzeProgram(program: string, index: number, refactorings: CliOpts["refactorings"]): Result {
     console.log(`Starting to analyze program ${index}`);
     const filePath = `../output/programs/program_${index}.ts`;
     const project = buildProject(program, filePath);
@@ -105,11 +135,7 @@ function analyzeProgram(program: string, index: number): Result {
     const diagnostics = sourceFile.getPreEmitDiagnostics();
 
     // Refactor info
-    const refactors: Set<string> = new Set();
-    for (let position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
-        const refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
-        refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
-    }
+    const refactors = refactorings ? getApplicableRefactors(project, sourceFile) : undefined;
 
     console.log(`Finished analyzing program ${index}`);
     return {
@@ -117,18 +143,20 @@ function analyzeProgram(program: string, index: number): Result {
         program: sourceFile.getFullText(),
         hasError: diagnostics.length > 0,
         errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
-        refactors: Array.from(refactors),
+        refactors: refactors ? Array.from(refactors) : undefined,
     };
 }
 
-function analyzePrograms(programs: string[]): Result[] {
-    return programs.map(analyzeProgram);
+function getApplicableRefactors(project: Project, file: SourceFile): Set<string> {
+    const refactors: Set<string> = new Set();
+    const languageService = project.getLanguageService();
+    for (let position = file.getStart(); position < file.getEnd(); position++) { // TODO: make this more efficient, node-based
+        const refactorsAtPosition = languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
+        refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
+    }
+    return refactors;
 }
 
-function getApplicableRefactors(project: Project, file: SourceFile, position: number): ts.ApplicableRefactorInfo[] {
-    const languageService = project.getLanguageService();
-    return languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
-}
 
 function buildProgram(program: types.Program): string {    
     const declarations = ts.createNodeArray(program.declarations.map(buildDeclaration));

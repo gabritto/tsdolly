@@ -11,17 +11,28 @@ var COMPILER_OPTIONS = {
     noEmit: true
 };
 function main() {
-    var args = yargs
+    var opts = yargs
         .usage("To do") // TODO: write usage
         .option("solution", {
         describe: "Path to file containing the Alloy metamodel solutions",
         type: "string",
         "default": "../output/alloySolutions.json"
-    }).argv;
-    tsdolly(args);
+    })
+        .option("refactorings", {
+        describe: "Check which refactorings can be applied",
+        type: "boolean",
+        "default": false
+    })
+        .option("result", {
+        describe: "Path to file where results should be saved",
+        type: "string",
+        "default": "logs/results.json"
+    })
+        .argv;
+    tsdolly(opts);
 }
-function tsdolly(args) {
-    var solutionFile = fs.readFileSync(args.solution, { encoding: "utf-8" });
+function tsdolly(opts) {
+    var solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     var solutionsRaw = JSON.parse(solutionFile);
     var ajv = new Ajv();
     ajv.addSchema(SCHEMA, "types");
@@ -31,17 +42,26 @@ function tsdolly(args) {
     var solutions = solutionsRaw;
     console.log(solutions.length + " solutions found");
     var programs = solutions.map(buildProgram);
-    var results = analyzePrograms(programs);
-    printResults(results);
+    var results = analyzePrograms(programs, opts);
+    printResults(results, opts);
 }
 ;
-function printResults(results) {
-    var aggregate = aggregateResults(results);
-    console.log("Total programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%\nAverage of available refactors: " + aggregate.refactorAvg);
+function printResults(results, opts) {
+    var aggregate = aggregateResults(results, opts.refactorings);
+    console.log("Total programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%");
+    if (opts.refactorings) {
+        console.log("Average of available refactors: " + aggregate.refactorAvg);
+    }
     var jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
-    console.log("Results as JSON:\n\n" + jsonResults);
+    try {
+        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf8" });
+        console.log("Results JSON written to " + opts.result);
+    }
+    catch (error) {
+        console.log("Error " + error + " found while writing results to file " + opts.result + ".\n\tResults:\n " + jsonResults);
+    }
 }
-function aggregateResults(results) {
+function aggregateResults(results, refactorings) {
     var compiling = 0;
     var totalRefactors = 0;
     for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
@@ -49,13 +69,15 @@ function aggregateResults(results) {
         if (!result.hasError) {
             compiling += 1;
         }
-        totalRefactors += result.refactors.length;
+        if (refactorings) {
+            totalRefactors += result.refactors.length; // TODO: get rid of bang, improve typing
+        }
     }
     return {
         total: results.length,
         compiling: compiling,
         compileRate: compiling / results.length,
-        refactorAvg: totalRefactors / results.length
+        refactorAvg: refactorings ? totalRefactors / results.length : undefined
     };
 }
 function buildProject(program, filePath) {
@@ -63,7 +85,10 @@ function buildProject(program, filePath) {
     project.createSourceFile(filePath, program);
     return project;
 }
-function analyzeProgram(program, index) {
+function analyzePrograms(programs, opts) {
+    return programs.map(function (program, index) { return analyzeProgram(program, index, opts.refactorings); });
+}
+function analyzeProgram(program, index, refactorings) {
     console.log("Starting to analyze program " + index);
     var filePath = "../output/programs/program_" + index + ".ts";
     var project = buildProject(program, filePath);
@@ -71,26 +96,24 @@ function analyzeProgram(program, index) {
     // Compiling info
     var diagnostics = sourceFile.getPreEmitDiagnostics();
     // Refactor info
-    var refactors = new Set();
-    for (var position = sourceFile.getStart(); position < sourceFile.getEnd(); position++) {
-        var refactorsAtPosition = getApplicableRefactors(project, sourceFile, position);
-        refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
-    }
+    var refactors = refactorings ? getApplicableRefactors(project, sourceFile) : undefined;
     console.log("Finished analyzing program " + index);
     return {
         path: sourceFile.getFilePath(),
         program: sourceFile.getFullText(),
         hasError: diagnostics.length > 0,
         errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
-        refactors: Array.from(refactors)
+        refactors: refactors ? Array.from(refactors) : undefined
     };
 }
-function analyzePrograms(programs) {
-    return programs.map(analyzeProgram);
-}
-function getApplicableRefactors(project, file, position) {
+function getApplicableRefactors(project, file) {
+    var refactors = new Set();
     var languageService = project.getLanguageService();
-    return languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
+    for (var position = file.getStart(); position < file.getEnd(); position++) { // TODO: make this more efficient, node-based
+        var refactorsAtPosition = languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
+        refactorsAtPosition.forEach(function (refactor) { return refactors.add(refactor.name); });
+    }
+    return refactors;
 }
 function buildProgram(program) {
     var declarations = ts_morph_1.ts.createNodeArray(program.declarations.map(buildDeclaration));
