@@ -1,24 +1,22 @@
 import yargs = require("yargs");
 import fs = require("fs");
 import Ajv = require("ajv");
-// import ts = require("typescript");
 
 import * as types from "./types";
 import { Project, SourceFile, ts, HeritageClause } from "ts-morph";
+import { assert } from "console";
+import { buildProject, buildProgram } from "./build";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
-const SCHEMA: Schema  = JSON.parse(fs.readFileSync("schema/types.json", { encoding: "utf-8" }));
-const COMPILER_OPTIONS = {
-    strict: true,
-    target: ts.ScriptTarget.Latest,
-    noEmit: true,
-};
+const SCHEMA: Schema = JSON.parse(
+    fs.readFileSync("schema/types.json", { encoding: "utf-8" })
+);
 
 interface CliOpts {
-    solution: string,
-    refactorings: boolean,
-    result: string,
+    solution: string;
+    refactorings: string[];
+    result: string;
 }
 
 function main(): void {
@@ -27,19 +25,19 @@ function main(): void {
         .option("solution", {
             describe: "Path to file containing the Alloy metamodel solutions",
             type: "string",
-            default: "../output/alloySolutions.json",
+            demandOption: true,
         })
         .option("refactorings", {
-            describe: "Check which refactorings can be applied",
-            type: "boolean",
-            default: false,
+            describe: "List of refactorings to be applied",
+            type: "string",
+            array: true,
+            default: [],
         })
         .option("result", {
             describe: "Path to file where results should be saved",
             type: "string",
-            default: "logs/results.json"
-        })
-        .argv;
+            default: "logs/results.json",
+        }).argv;
 
     tsdolly(opts);
 }
@@ -57,17 +55,16 @@ function tsdolly(opts: CliOpts): void {
     const programs = solutions.map(buildProgram);
     const results = analyzePrograms(programs, opts);
 
-
     printResults(results, opts);
 }
 
 export interface Result {
-    path: string,
-    program: string,
-    hasError: boolean,
-    errors: string,
-    refactors?: string[], // Currently name of refactor. TODO: change this to have more info on refactors (e.g. action, position)
-};
+    path: string;
+    program: string;
+    hasError: boolean;
+    errors: string;
+    refactors: RefactorInfo[];
+}
 
 function printResults(results: Result[], opts: CliOpts): void {
     const aggregate = aggregateResults(results, opts.refactorings);
@@ -79,31 +76,40 @@ Compiling rate: ${aggregate.compileRate * 100}%`);
         console.log(`Average of available refactors: ${aggregate.refactorAvg}`);
     }
 
-    const jsonResults = JSON.stringify(results, /* replacer */ undefined, /* space */ 4);
+    const jsonResults = JSON.stringify(
+        results,
+        /* replacer */ undefined,
+        /* space */ 4
+    );
     try {
         fs.writeFileSync(opts.result, jsonResults, { encoding: "utf8" });
         console.log(`Results JSON written to ${opts.result}`);
     } catch (error) {
-        console.log(`Error ${error} found while writing results to file ${opts.result}.\n\tResults:\n ${jsonResults}`);
+        console.log(
+            `Error ${error} found while writing results to file ${opts.result}.\n\tResults:\n ${jsonResults}`
+        );
     }
 }
 
 interface AggregateResult {
-    total: number,
-    compiling: number,
-    compileRate: number,
-    refactorAvg?: number,
+    total: number;
+    compiling: number;
+    compileRate: number;
+    refactorAvg?: number;
 }
 
-function aggregateResults(results: Result[], refactorings: CliOpts["refactorings"]): AggregateResult {
+function aggregateResults(
+    results: Result[],
+    refactorings: CliOpts["refactorings"]
+): AggregateResult {
     let compiling = 0;
     let totalRefactors = 0;
     for (const result of results) {
         if (!result.hasError) {
             compiling += 1;
         }
-        if (refactorings) {
-            totalRefactors += result.refactors!.length; // TODO: get rid of bang, improve typing
+        if (result.refactors.length > 0) {
+            totalRefactors += result.refactors.length;
         }
     }
 
@@ -111,21 +117,23 @@ function aggregateResults(results: Result[], refactorings: CliOpts["refactorings
         total: results.length,
         compiling,
         compileRate: compiling / results.length,
-        refactorAvg: refactorings ? totalRefactors / results.length : undefined,
-    }
-}
-
-function buildProject(program: string, filePath: string): Project {
-    const project = new Project({ compilerOptions: COMPILER_OPTIONS });
-    project.createSourceFile(filePath, program);
-    return project;
+        refactorAvg: totalRefactors / results.length,
+    };
 }
 
 function analyzePrograms(programs: string[], opts: CliOpts): Result[] {
-    return programs.map((program, index) => analyzeProgram(program, index, opts.refactorings));
+    const refactoringPred = buildPredicate(opts.refactorings);
+    return programs.map((program, index) =>
+        analyzeProgram(program, index, opts.refactorings, refactoringPred)
+    );
 }
 
-function analyzeProgram(program: string, index: number, refactorings: CliOpts["refactorings"]): Result {
+function analyzeProgram(
+    program: string,
+    index: number,
+    refactorings: CliOpts["refactorings"],
+    refactoringPred: NodePredicate
+): Result {
     console.log(`Starting to analyze program ${index}`);
     const filePath = `../output/programs/program_${index}.ts`;
     const project = buildProject(program, filePath);
@@ -135,7 +143,12 @@ function analyzeProgram(program: string, index: number, refactorings: CliOpts["r
     const diagnostics = sourceFile.getPreEmitDiagnostics();
 
     // Refactor info
-    const refactors = refactorings ? getApplicableRefactors(project, sourceFile) : undefined;
+    const refactorsInfo = getRefactorInfo(
+        project,
+        sourceFile.compilerNode,
+        refactorings,
+        refactoringPred
+    );
 
     console.log(`Finished analyzing program ${index}`);
     return {
@@ -143,239 +156,142 @@ function analyzeProgram(program: string, index: number, refactorings: CliOpts["r
         program: sourceFile.getFullText(),
         hasError: diagnostics.length > 0,
         errors: project.formatDiagnosticsWithColorAndContext(diagnostics),
-        refactors: refactors ? Array.from(refactors) : undefined,
+        refactors: refactorsInfo,
     };
 }
 
-function getApplicableRefactors(project: Project, file: SourceFile): Set<string> {
-    const refactors: Set<string> = new Set();
-    const languageService = project.getLanguageService();
-    for (let position = file.getStart(); position < file.getEnd(); position++) { // TODO: make this more efficient, node-based
-        const refactorsAtPosition = languageService.compilerObject.getApplicableRefactors(file.getFilePath(), position, /* preferences */ undefined);
-        refactorsAtPosition.forEach(refactor => refactors.add(refactor.name));
+type NodePredicate = (_: ts.Node) => boolean;
+
+interface RefactorInfo {
+    name: string;
+    action: string;
+    range: ts.TextRange;
+    editInfo: ts.RefactorEditInfo;
+}
+
+const REFACTOR_TO_PRED: Map<string, NodePredicate> = new Map([
+    ["Convert to template string", isStringConcat],
+    ["Convert parameters to destructured object", isParameter],
+]);
+
+function isStringConcat(node: ts.Node) {
+    return ts.isBinaryExpression(node); // TODO: can we add more checks to this?
+}
+
+function isParameter(node: ts.Node) {
+    return ts.isParameter(node);
+}
+
+function buildPredicate(enabledRefactorings: string[]): NodePredicate {
+    const preds: NodePredicate[] = [];
+    enabledRefactorings.forEach((refactoring) => {
+        const pred = REFACTOR_TO_PRED.get(refactoring);
+        if (!pred) {
+            throw new Error(`Could not find node predicate for refactoring '${refactoring}'.
+To try and apply a refactoring, you need to first implement a predicate over nodes.
+The predicate specifies to which nodes we should consider applying the refactoring.`);
+        }
+        preds.push(pred);
+    });
+
+    return function (node) {
+        return preds.some((pred) => pred(node));
+    };
+}
+
+function getRefactorInfo(
+    project: Project,
+    file: ts.SourceFile,
+    enabledRefactorings: string[],
+    pred: NodePredicate
+): RefactorInfo[] {
+    const refactorsInfo: RefactorInfo[] = [];
+    visit(file);
+    return refactorsInfo;
+
+    function visit(node: ts.Node): void {
+        if (pred(node)) {
+            const refactorInfo = getApplicableRefactors(
+                project,
+                node
+            ).filter((refactorInfo) =>
+                enabledRefactorings.includes(refactorInfo.name)
+            );
+            // TODO: remove duplicates?
+            refactorInfo.forEach((refactor) => {
+                refactor.actions.forEach((action) => {
+                    const edit = getEditInfo(
+                        project,
+                        node,
+                        refactor.name,
+                        action.name
+                    );
+                    if (edit) {
+                        refactorsInfo.push({
+                            name: refactor.name,
+                            action: action.name,
+                            editInfo: edit,
+                            range: { pos: node.pos, end: node.end }
+                        });
+                    }
+                });
+            });
+        }
+
+        node.forEachChild(visit);
     }
-    return refactors;
 }
 
-
-function buildProgram(program: types.Program): string {    
-    const declarations = ts.createNodeArray(program.declarations.map(buildDeclaration));
-    const file = ts.createSourceFile("../output/program.ts", "", COMPILER_OPTIONS.target, /* setParentNodes */ false, ts.ScriptKind.TS); // TODO: refactor to use same options
-    
-    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-    const result = printer.printList(ts.ListFormat.MultiLine, declarations, file);
-    return result;
-}
-
-function buildDeclaration(declaration: types.Declaration): ts.Declaration {
-    switch (declaration.nodeType) {
-        case "FunctionDecl":
-            return buildFunctionDecl(declaration);
-        case "ClassDecl":
-            return buildClassDecl(declaration);
-    }
-}
-
-function buildFunctionDecl(functionDecl: types.FunctionDecl): ts.FunctionDeclaration {
-    const name = getIdentifier(functionDecl.name);
-    const parameters: ts.ParameterDeclaration[] = functionDecl.parameters.map(buildParameterDecl);
-    const body: ts.Block = buildBlock(functionDecl.body);
-
-    return ts.createFunctionDeclaration(
-        /* decorators */ undefined,
-        /* modifiers */ undefined,
-        /* asteriskToken */ undefined,
-        /* name */ name,
-        /* typeParameters */ undefined,
-        /* parameters */ parameters,
-        /* type */ undefined,
-        /* body */ body
-        );
-}
-
-function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
-    const name = getIdentifier(classDecl.name);
-    const heritageClauses: ts.HeritageClause[] = [];
-    if (classDecl.extend != null) {
-        const parentClassName = getIdentifier(classDecl.extend.name);
-        const parentClass = ts.createExpressionWithTypeArguments(
-            /* typeArguments */ undefined,
-            /* expression */ ts.createIdentifier(parentClassName)
-        );
-        const heritageClause = ts.createHeritageClause(
-            /* token */ ts.SyntaxKind.ExtendsKeyword,
-            /* types */ [parentClass]
-        );
-        heritageClauses.push(heritageClause);
-    }
-
-    const methods = classDecl.methods.map(buildMethodDecl);
-
-    return ts.createClassDeclaration(
-        /* decorators */ undefined,
-        /* modifiers */ undefined,
-        /* name */ name,
-        /* typeParameters */ undefined,
-        /* heritageClauses */ heritageClauses,
-        /* members */ methods
+function getApplicableRefactors(
+    project: Project,
+    node: ts.Node
+): ts.ApplicableRefactorInfo[] {
+    const languageService = project.getLanguageService().compilerObject;
+    return languageService.getApplicableRefactors(
+        node.getSourceFile().fileName,
+        node,
+        /* preferences */ undefined
     );
 }
 
-function buildMethodDecl(methodDecl: types.MethodDecl): ts.MethodDeclaration {
-    const name = getIdentifier(methodDecl.name);
-    const parameters: ts.ParameterDeclaration[] = methodDecl.parameters.map(buildParameterDecl);
-    const body: ts.Block = buildBlock(methodDecl.body);
-
-    return ts.createMethod(
-        /* decorators */ undefined,
-        /* modifiers */ undefined,
-        /* asteriskToken */ undefined,
-        /* name */ name,
-        /* questionToken */ undefined,
-        /* typeParameters */ undefined,
-        /* parameters */ parameters,
-        /* type */ undefined,
-        /* body */ body
-        );
-}
-
-function buildParameterDecl(parameterDecl: types.ParameterDecl): ts.ParameterDeclaration {
-    const name = getIdentifier(parameterDecl.name);
-    const type = buildType(parameterDecl.type);
-
-    return ts.createParameter(
-        /* decorators */ undefined,
-        /* modifiers */ undefined,
-        /* dotDotToken */ undefined,
-        /* name */ name,
-        /* questionToken */ undefined,
-        /* type */ type,
-        /* initializer */ undefined
+function getEditInfo(
+    project: Project,
+    node: ts.Node,
+    refactorName: string,
+    actionName: string
+): ts.RefactorEditInfo | undefined {
+    const languageService = project.getLanguageService().compilerObject;
+    const formatSettings = project.manipulationSettings.getFormatCodeSettings();
+    const editInfo = languageService.getEditsForRefactor(
+        node.getSourceFile().fileName,
+        /* formatOptions */ formatSettings,
+        node,
+        refactorName,
+        actionName,
+        /* preferences */ undefined
     );
-}
-
-function buildType(type: types.Type): ts.TypeNode {
-    switch (type.nodeType) {
-        case "TNumber":
-        case "TString":
-            return buildPrimType(type);
-    }
-}
-
-function buildPrimType(type: types.PrimType): ts.TypeNode {
-    switch (type.nodeType) {
-        case "TNumber":
-            return ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-        case "TString":
-            return ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    }
-}
-
-function buildBlock(block: types.Block): ts.Block {
-    const statements = block.statements.map(buildStatement);
-
-    return ts.createBlock(
-        /* statements */ statements,
-        /* multiline */ true
-    )
-}
-
-function buildStatement(statement: types.Statement): ts.Statement {
-    switch (statement.nodeType) {
-        case "ExpressionStatement":
-            return buildExpressionStatement(statement);
-    }
-}
-
-function buildExpressionStatement(expressionStatement: types.ExpressionStatement): ts.ExpressionStatement {
-    const expression = buildExpression(expressionStatement.expression);
-
-    return ts.createExpressionStatement(expression);
-}
-
-function buildExpression(expression: types.Expression): ts.Expression {
-    switch (expression.nodeType) {
-        case "VariableAccess":
-            return buildVariableAccess(expression);
-        case "AssignmentExpression":
-            return buildAssignmentExpression(expression);
-        case "FunctionCall":
-            return buildFunctionCall(expression);
-        case "StringConcat":
-            return buildStringConcat(expression);
-    }
-}
-
-function buildVariableAccess(variableAccess: types.VariableAccess): ts.Expression {
-    const identifier = getIdentifier(variableAccess.variable);
-
-    return ts.createIdentifier(identifier);
-}
-
-function buildAssignmentExpression(assignmentExpression: types.AssignmentExpression): ts.BinaryExpression {
-    const left = buildVariableAccess(assignmentExpression.left);
-    const right = buildExpression(assignmentExpression.right);
-
-    return ts.createBinary(
-        /* left */ left,
-        /* operator */ ts.SyntaxKind.EqualsToken,
-        /* right */ right
+    assert(
+        editInfo?.commands === undefined,
+        "We cannot deal with refactorings which include commands."
     );
+    return editInfo;
 }
 
-function buildFunctionCall(functionCall: types.FunctionCall): ts.CallExpression {
-    const identifier = ts.createIdentifier(getIdentifier(functionCall.name));
-    const args = functionCall.arguments.map(buildExpression);
-    return ts.createCall(
-        /* expression */ identifier,
-        /* typeArguments */ undefined,
-        /* argumentsArray */ args
-    );
+function applyRefactorEdits(project: Project, file: ts.SourceFile, refactorInfo: RefactorInfo): Project {
+    const resultingProject = new Project();
 }
 
-function buildStringConcat(stringConcat: types.StringConcat): ts.Expression {
-    return buildStringConcatWorker(stringConcat.concat);
+function applyEditChanges(project: Project) {
+    // TODO
 }
 
-function buildStringConcatWorker(strings: (types.StringLiteral | types.VariableAccess)[]): ts.Expression {
-    if (strings.length === 0) {
-        throw new Error("Expected at least one element in string concat array");
-    }
-    if (strings.length == 1) {
-        const [s] = strings;
-        return buildStringConcatElement(s);
+function cloneProject(project: Project): Project {
+    const newProject = new Project({ compilerOptions: project.getCompilerOptions() });
+    for (const file of newProject.getSourceFiles()) {
+        newProject.createSourceFile(file.getFilePath(), file.getText());
     }
 
-    const [s, ...rest] = strings;
-    return ts.createBinary(
-        /* left */ buildStringConcatElement(s),
-        /* operator */ ts.SyntaxKind.PlusToken,
-        /* right */ buildStringConcatWorker(rest)
-    );
-}
-
-function buildStringConcatElement(s: types.StringLiteral | types.VariableAccess): ts.Expression {
-    switch (s.nodeType) {
-        case "StringLiteral":
-            return buildStringLiteral(s);
-        case "VariableAccess":
-            return buildVariableAccess(s); // TODO: do we need to parenthesize those?
-    }
-}
-
-function buildStringLiteral(stringLiteral: types.StringLiteral): ts.StringLiteral {
-    return ts.createStringLiteral(stringLiteral.nodeId);
-}
-
-function getIdentifier(identifier: types.Identifier): string {
-    // switch (identifier.nodeType) {
-    //     case "FunctionIdentifier":
-    //         return `function${identifier.nodeId}`
-    //     case "ParameterIdentifier":
-    //         return `param${identifier.nodeId}`
-    // }
-    return identifier.nodeId;
-    // TODO: prettify names
+    return newProject;
 }
 
 if (!module.parent) {

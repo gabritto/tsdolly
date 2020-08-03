@@ -1,30 +1,27 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "RawObject": {
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "RawObject": {
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": ["type", "id"],
+            "type": "object"
         },
-        "type": {
-          "type": "string"
+        "RawSolutions": {
+            "items": {
+                "items": {
+                    "$ref": "#/definitions/RawObject"
+                },
+                "type": "array"
+            },
+            "type": "array"
         }
-      },
-      "required": [
-        "type",
-        "id"
-      ],
-      "type": "object"
-    },
-    "RawSolutions": {
-      "items": {
-        "items": {
-          "$ref": "#/definitions/RawObject"
-        },
-        "type": "array"
-      },
-      "type": "array"
     }
-  }
 }

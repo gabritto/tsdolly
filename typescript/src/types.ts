@@ -1,34 +1,37 @@
 export type Solutions = Program[];
 
 export interface Node {
-    nodeId: string,
-    nodeType: string
+    nodeId: string;
+    nodeType: string;
 }
 
 // Identifiers
-export type Identifier = FunctionIdentifier | ParameterIdentifier
-    | ClassIdentifier | MethodIdentifier;
+export type Identifier =
+    | FunctionIdentifier
+    | ParameterIdentifier
+    | ClassIdentifier
+    | MethodIdentifier;
 
 export interface FunctionIdentifier extends Node {
-    nodeType: "FunctionIdentifier"
+    nodeType: "FunctionIdentifier";
 }
 
 export interface ParameterIdentifier extends Node {
-    nodeType: "ParameterIdentifier"
+    nodeType: "ParameterIdentifier";
 }
 
 export interface ClassIdentifier extends Node {
-    nodeType: "ClassIdentifier"
+    nodeType: "ClassIdentifier";
 }
 
 export interface MethodIdentifier extends Node {
-    nodeType: "MethodIdentifier"
+    nodeType: "MethodIdentifier";
 }
 
 // Program
 export interface Program extends Node {
-    nodeType: "Program",
-    declarations: Declaration[]
+    nodeType: "Program";
+    declarations: Declaration[];
 }
 
 // Declarations
@@ -36,78 +39,81 @@ export type Declaration = FunctionDecl | ClassDecl;
 
 // Function
 export interface FunctionDecl extends Node {
-    nodeType: "FunctionDecl",
-    name: FunctionIdentifier,
-    parameters: ParameterDecl[],
-    body: Block,
+    nodeType: "FunctionDecl";
+    name: FunctionIdentifier;
+    parameters: ParameterDecl[];
+    body: Block;
 }
 
 // Class
 export interface ClassDecl extends Node {
-    nodeType: "ClassDecl",
-    name: ClassIdentifier,
-    extend?: ClassDecl,
-    methods: MethodDecl[],
+    nodeType: "ClassDecl";
+    name: ClassIdentifier;
+    extend?: ClassDecl;
+    methods: MethodDecl[];
 }
 
 // Method
 export interface MethodDecl extends Node {
-    nodeType: "MethodDecl",
-    name: MethodIdentifier,
-    parameters: ParameterDecl[],
-    body: Block,
+    nodeType: "MethodDecl";
+    name: MethodIdentifier;
+    parameters: ParameterDecl[];
+    body: Block;
 }
 
 // Parameters
 export interface ParameterDecl extends Node {
-    nodeType: "ParameterDecl",
-    name: ParameterIdentifier,
-    type: Type
+    nodeType: "ParameterDecl";
+    name: ParameterIdentifier;
+    type: Type;
 }
 
 // Statements & Expressions
 export interface Block extends Node {
-    nodeType: "Block",
-    statements: Statement[]
+    nodeType: "Block";
+    statements: Statement[];
 }
 
 export type Statement = ExpressionStatement;
 
 export interface ExpressionStatement extends Node {
-    nodeType: "ExpressionStatement",
-    expression: Expression
+    nodeType: "ExpressionStatement";
+    expression: Expression;
 }
 
-export type Expression = AssignmentExpression | VariableAccess
-    | FunctionCall | StringConcat;
+export type Expression =
+    | AssignmentExpression
+    | VariableAccess
+    | FunctionCall
+    | StringConcat;
 
 export interface AssignmentExpression extends Node {
-    nodeType: "AssignmentExpression",
-    left: VariableAccess,
-    right: Expression
+    nodeType: "AssignmentExpression";
+    left: VariableAccess;
+    right: Expression;
 }
 
 export interface VariableAccess extends Node {
-    nodeType: "VariableAccess",
-    variable: ParameterIdentifier
+    nodeType: "VariableAccess";
+    variable: ParameterIdentifier;
 }
 
 export interface FunctionCall extends Node {
-    nodeType: "FunctionCall",
-    name: FunctionIdentifier,
-    arguments: VariableAccess[]
+    nodeType: "FunctionCall";
+    name: FunctionIdentifier;
+    arguments: VariableAccess[];
 }
 
 export interface StringConcat extends Node {
-    nodeType: "StringConcat",
-    concat: (StringLiteral | VariableAccess)[],
+    nodeType: "StringConcat";
+    concat: (StringLiteral | VariableAccess)[];
 }
 
 export interface StringLiteral extends Node {
-    nodeType: "StringLiteral",
+    nodeType: "StringLiteral";
 }
 
-export type Type = PrimType // | InterfaceType | ObjectLiteralType;
+export type Type = PrimType; // | InterfaceType | ObjectLiteralType;
 
 export type PrimType = TNumber | TString;
 
@@ -120,9 +126,9 @@ export type PrimType = TNumber | TString;
 // }
 
 export interface TNumber extends Node {
-    nodeType: "TNumber"
+    nodeType: "TNumber";
 }
 
 export interface TString extends Node {
-    nodeType: "TString"
+    nodeType: "TString";
 }
