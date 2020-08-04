@@ -16,10 +16,12 @@
     "license": "ISC",
     "dependencies": {
         "ajv": "^6.12.2",
-        "ts-morph": "^7.1.2",
+        "lodash": "~4.14.1",
+        "ts-morph": "7.1.2",
         "yargs": "^15.0.5"
     },
     "devDependencies": {
+        "@types/lodash": "~4.14.158",
         "@types/node": "^14.0.14",
         "@types/yargs": "^15.0.5",
         "prettier": "2.0.5",

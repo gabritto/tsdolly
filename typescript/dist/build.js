@@ -15,7 +15,7 @@ function buildProject(program, filePath) {
 exports.buildProject = buildProject;
 function buildProgram(program) {
     var declarations = ts_morph_1.ts.createNodeArray(program.declarations.map(buildDeclaration));
-    var file = ts_morph_1.ts.createSourceFile("../output/program.ts", "", COMPILER_OPTIONS.target, 
+    var file = ts_morph_1.ts.createSourceFile("program.ts", "", COMPILER_OPTIONS.target, 
     /* setParentNodes */ false, ts_morph_1.ts.ScriptKind.TS); // TODO: refactor to use same options
     var printer = ts_morph_1.ts.createPrinter({ newLine: ts_morph_1.ts.NewLineKind.LineFeed });
     var result = printer.printList(ts_morph_1.ts.ListFormat.MultiLine, declarations, file);

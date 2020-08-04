@@ -6,9 +6,9 @@ function inspectResults(path) {
     return results;
 }
 function getErrorResults(results) {
-    return results.filter(function (res) { return res.hasError; });
+    return results.filter(function (res) { return res.program.hasError; });
 }
 function prettyPrintError(result) {
-    console.log("Program:\n\u001B[34m" + result.program + "\u001B[0m\nError:" + result.errors);
+    console.log("Program:\n\u001B[34m" + result.program + "\u001B[0m\nError:" + result.program.errorMessage);
 }
 //# sourceMappingURL=script.js.map

@@ -18,7 +18,7 @@ export function buildProgram(program: types.Program): string {
         program.declarations.map(buildDeclaration)
     );
     const file = ts.createSourceFile(
-        "../output/program.ts",
+        "program.ts",
         "",
         COMPILER_OPTIONS.target,
         /* setParentNodes */ false,
