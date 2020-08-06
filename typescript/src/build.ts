@@ -1,3 +1,5 @@
+import _ = require("lodash");
+
 import { ts, Project } from "ts-morph";
 import * as types from "./types";
 
@@ -217,6 +219,7 @@ function buildStringConcat(stringConcat: types.StringConcat): ts.Expression {
     return buildStringConcatWorker(stringConcat.concat);
 }
 
+// Builds left-associative string/expression concatenation.
 function buildStringConcatWorker(
     strings: (types.StringLiteral | types.VariableAccess)[]
 ): ts.Expression {
@@ -228,11 +231,13 @@ function buildStringConcatWorker(
         return buildStringConcatElement(s);
     }
 
-    const [s, ...rest] = strings;
+    const rest = _.initial(strings);
+    const s = _.last(strings)!; // This cannot be undefined because strings.length > 1
+    // const [s, ...rest] = strings;
     return ts.createBinary(
-        /* left */ buildStringConcatElement(s),
+        /* left */ buildStringConcatWorker(rest),
         /* operator */ ts.SyntaxKind.PlusToken,
-        /* right */ buildStringConcatWorker(rest)
+        /* right */ buildStringConcatElement(s)
     );
 }
 
