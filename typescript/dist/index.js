@@ -27,13 +27,13 @@ function main() {
         type: "string",
         demandOption: true
     })
-        .option("refactorings", {
+        .option("refactoring", {
         describe: "List of refactorings to be analyzed",
         type: "string",
-        array: true,
-        "default": []
+        choices: Object.values(Refactoring),
+        demandOption: true
     })
-        .option("applyRefactorings", {
+        .option("applyRefactoring", {
         describe: "Whether we should apply the refactorings available",
         type: "boolean",
         "default": false
@@ -45,9 +45,17 @@ function main() {
     })
         .option("first", {
         describe: "Consider only the first n solutions",
-        type: "number"
-    }).argv;
-    tsdolly(opts);
+        type: "number",
+        conflicts: "samplingRatio"
+    })
+        .option("samplingRatio", {
+        describe: "Percentage of the solutions that will be sampled (using random sampling)",
+        type: "number",
+        conflicts: "first"
+    })
+        .epilogue("TODO: epilogue").argv;
+    var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring });
+    tsdolly(cliOpts);
 }
 function tsdolly(opts) {
     var solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
@@ -58,21 +66,30 @@ function tsdolly(opts) {
         throw ajv.errors;
     }
     var solutions = solutionsRaw;
-    if (opts.first) {
-        console_1.assert(opts.first >= 0, "Expected option 'first' to be a natural number, but it is " + opts.first + ".");
-        solutions = solutions.slice(0, opts.first);
-    }
-    console.log(solutions.length + " solutions will be analyzed");
+    var total = solutions.length;
+    solutions = sampleSolutions(solutions, opts);
+    console.log(solutions.length + " solutions from a total of " + total + " will be analyzed");
     var programs = solutions.map(build_1.buildProgram);
     var results = analyzePrograms(programs, opts);
     printResults(results, opts);
 }
+function sampleSolutions(solutions, opts) {
+    if (opts.first) {
+        console_1.assert(opts.first > 0, "Expected option 'first' to be a positive integer, but it is " + opts.first + ".");
+        console_1.assert(opts.first <= solutions.length, "Expected option 'first' to be at most the number of solutions (" + solutions.length + "), but it is " + opts.first + ".");
+        return solutions.slice(0, opts.first);
+    }
+    if (opts.samplingRatio) {
+        console_1.assert(opts.samplingRatio > 0 && opts.samplingRatio <= 100, "Expected option 'samplingRatio' to be a percentage, that is, a number between 0 and 100, but it is " + opts.samplingRatio + ".");
+        var size = (opts.samplingRatio / 100) * solutions.length;
+        solutions = _.sampleSize(solutions, size);
+    }
+    return solutions;
+}
 function printResults(results, opts) {
     var aggregate = aggregateResults(results);
     console.log("Total programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%");
-    if (opts.refactorings) {
-        console.log("Average of available refactors: " + aggregate.refactorAvg);
-    }
+    console.log("Average of available refactors: " + aggregate.refactorAvg);
     var jsonResults = JSON.stringify(results, 
     /* replacer */ undefined, 
     /* space */ 4);
@@ -104,12 +121,15 @@ function aggregateResults(results) {
     };
 }
 function analyzePrograms(programs, opts) {
-    var refactoringPred = buildPredicate(opts.refactorings);
+    var refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
+    if (!refactoringPred) {
+        throw new Error("Could not find node predicate for refactoring '" + opts.refactoring + "'.\nTo try and apply a refactoring, you need to first implement a predicate over nodes.\nThis predicate specifies to which nodes we should consider applying the refactoring.");
+    }
     return programs.map(function (program, index) {
-        return analyzeProgram(program, index, opts.refactorings, opts.applyRefactorings, refactoringPred);
+        return analyzeProgram(program, index, opts.refactoring, opts.applyRefactoring, refactoringPred);
     });
 }
-function analyzeProgram(program, index, refactorings, applyRefactorings, refactoringPred) {
+function analyzeProgram(program, index, refactoring, applyRefactoring, refactoringPred) {
     console.log("Starting to analyze program " + index);
     // const filePath = `../output/programs/program_${index}.ts`;
     var filePath = "program.ts";
@@ -118,7 +138,7 @@ function analyzeProgram(program, index, refactorings, applyRefactorings, refacto
     // Compiling info
     var diagnostics = sourceFile.getPreEmitDiagnostics();
     // Refactor info
-    var refactorsInfo = getRefactorInfo(project, sourceFile.compilerNode, applyRefactorings, refactorings, refactoringPred);
+    var refactorsInfo = getRefactorInfo(project, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
     console.log("Finished analyzing program " + index);
     return {
         program: projectToProgram(project),
@@ -132,9 +152,9 @@ function projectToProgram(project) {
             text: file.getFullText()
         };
     });
-    var diagnostics = project.getPreEmitDiagnostics();
+    var diagnostics = project.getPreEmitDiagnostics().map(toDiagnostic);
     var hasError = diagnostics.length > 0;
-    var errorMessage = project.formatDiagnosticsWithColorAndContext(diagnostics);
+    var errorMessage = project.formatDiagnosticsWithColorAndContext(project.getPreEmitDiagnostics());
     return {
         files: files,
         diagnostics: diagnostics,
@@ -143,9 +163,35 @@ function projectToProgram(project) {
         compilerOptions: project.getCompilerOptions()
     };
 }
+function toDiagnostic(diagnostic) {
+    var _a;
+    var messageText = "";
+    var msg = diagnostic.getMessageText();
+    if (typeof msg === "string") {
+        messageText = msg;
+    }
+    else {
+        // If diagnostic message is a chain, we're only getting the first message.
+        messageText = msg.getMessageText();
+    }
+    return {
+        file: (_a = diagnostic.getSourceFile()) === null || _a === void 0 ? void 0 : _a.getFilePath(),
+        code: diagnostic.getCode(),
+        line: diagnostic.getLineNumber(),
+        start: diagnostic.getStart(),
+        length: diagnostic.getLength(),
+        category: diagnostic.getCategory(),
+        messageText: messageText
+    };
+}
+var Refactoring;
+(function (Refactoring) {
+    Refactoring["ConvertParamsToDestructuredObject"] = "Convert parameters to destructured object";
+    Refactoring["ConvertToTemplateString"] = "Convert to template string";
+})(Refactoring || (Refactoring = {}));
 var REFACTOR_TO_PRED = new Map([
-    ["Convert to template string", isStringConcat],
-    ["Convert parameters to destructured object", isParameter],
+    [Refactoring.ConvertParamsToDestructuredObject, isParameter],
+    [Refactoring.ConvertToTemplateString, isStringConcat],
 ]);
 function isStringConcat(node) {
     return ts_morph_1.ts.isBinaryExpression(node); // TODO: can we add more checks to this?
@@ -153,34 +199,22 @@ function isStringConcat(node) {
 function isParameter(node) {
     return ts_morph_1.ts.isParameter(node);
 }
-function buildPredicate(enabledRefactorings) {
-    var preds = [];
-    enabledRefactorings.forEach(function (refactoring) {
-        var pred = REFACTOR_TO_PRED.get(refactoring);
-        if (!pred) {
-            throw new Error("Could not find node predicate for refactoring '" + refactoring + "'.\nTo try and apply a refactoring, you need to first implement a predicate over nodes.\nThe predicate specifies to which nodes we should consider applying the refactoring.");
-        }
-        preds.push(pred);
-    });
-    return function (node) {
-        return preds.some(function (pred) { return pred(node); });
-    };
-}
-function getRefactorInfo(project, file, applyRefactorings, enabledRefactorings, pred) {
+function getRefactorInfo(project, file, applyRefactoring, enabledRefactoring, pred) {
     var refactorsInfo = [];
     visit(file);
-    refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) { return _.isEqual(a.editInfo, b.editInfo); });
-    if (applyRefactorings) {
-        return refactorsInfo.map(function (refactorInfo) {
-            return __assign(__assign({}, refactorInfo), { resultingProgram: getRefactorResult(project, refactorInfo) });
-        });
+    refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
+        return _.isEqual(a.editInfo, b.editInfo);
+    });
+    if (applyRefactoring) {
+        for (var _i = 0, refactorsInfo_1 = refactorsInfo; _i < refactorsInfo_1.length; _i++) {
+            var refactorInfo = refactorsInfo_1[_i];
+            refactorInfo.resultingProgram = getRefactorResult(project, refactorInfo);
+        }
     }
     return refactorsInfo;
     function visit(node) {
         if (pred(node)) {
-            var refactorInfo = getApplicableRefactors(project, node).filter(function (refactorInfo) {
-                return enabledRefactorings.includes(refactorInfo.name);
-            });
+            var refactorInfo = getApplicableRefactors(project, node).filter(function (refactorInfo) { return enabledRefactoring === refactorInfo.name; });
             refactorInfo.forEach(function (refactor) {
                 refactor.actions.forEach(function (action) {
                     var edit = getEditInfo(project, node, refactor.name, action.name);
@@ -249,16 +283,6 @@ function singleton(arr, message) {
     }
     return arr[0];
 }
-// // This implementation was copied from TypeScript's `ts.textChanges.applyChanges`.
-// function applyChanges(text: string, changes: readonly ts.TextChange[]): string {
-//     for (const change of changes) {
-//         const { span, newText } = change;
-//         text = `${text.substring(0, span.start)}${newText}${text.substring(
-//             span.start + span.length
-//         )}`;
-//     }
-//     return text;
-// }
 if (!module.parent) {
     main();
 }

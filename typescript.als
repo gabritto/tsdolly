@@ -3,12 +3,14 @@ sig FunctionIdentifier {}
 sig ParameterIdentifier {}
 sig ClassIdentifier {}
 sig MethodIdentifier {}
+sig FieldIdentifier {}
 
 fact IdentifierParent {
 	(all i: FunctionIdentifier | one f: FunctionDecl | i = f.name)
-	(all i: ParameterIdentifier | one p: ParameterDecl | i = p.name)
+	(all i: ParameterIdentifier | some p: ParameterDecl | i = p.name)
 	(all i: ClassIdentifier | one c: ClassDecl | i = c.name)
-	(all i: MethodIdentifier | one m: MethodDecl | i = m.name)
+	(all i: MethodIdentifier | some m: MethodDecl | i = m.name)
+	(all i: FieldIdentifier | some f: Field | i = f.name)
 }
 
 
@@ -34,14 +36,31 @@ sig FunctionDecl extends Declaration {
 sig ClassDecl extends Declaration {
 	name: one ClassIdentifier,
 	extend: lone ClassDecl,
-	methods: set MethodDecl
+	methods: set MethodDecl,
+	fields: set Field,
 	-- TODO: constructor
-	-- TODO: fields
 }
 
 fact ClassExtendNoCycle {
 	all c: ClassDecl | c not in c.^extend
 }
+
+// Field
+sig Field {
+	name: one FieldIdentifier,
+	type: one Type, -- Must have a type annotation (simplifying for strict mode use)
+	visibility: lone Private
+}
+
+fact FieldParent {
+	all f: Field | some c: ClassDecl | f in c.fields
+}
+
+fact FieldUniqueName {
+	all c: ClassDecl | all disj f1, f2: c.*extend.fields | f1.name != f2.name
+}
+
+one sig Private {}
 
 // Method
 sig MethodDecl {
@@ -54,6 +73,10 @@ fact MethodParent {
 	all m: MethodDecl | one c: ClassDecl | m in c.methods
 }
 
+fact MethodDeclUniqueName {
+	all c: ClassDecl | all disj m1, m2: c.methods | m1.name != m2.name
+}
+
 // Parameters
 sig ParameterDecl {
 	name: one ParameterIdentifier,
@@ -61,15 +84,20 @@ sig ParameterDecl {
 }
 
 fact ParameterDeclParent {
-	all p: ParameterDecl { -- TODO: should this be `some` or `one`?
+	all p: ParameterDecl {
 		(some f: FunctionDecl  | p in f.parameters)
 		or (some m: MethodDecl | p in m.parameters)
 	}
 }
 
+fact ParameterDeclUniqueName {
+	all f: FunctionDecl | all disj p1, p2: f.parameters | p1.name != p2.name
+	all m: MethodDecl | all disj p1, p2: m.parameters | p1.name != p2.name
+}
+
 -- ===== Statements & Expressions =====
 sig Block {
-	statements: set Statement
+	statements: lone Statement -- Limit statements to avoid combinatorial explosion.
 }
 
 fact BlockParent {
@@ -113,7 +141,7 @@ fact AssignmentExpressionNoCycle {
 }
 
 sig VariableAccess extends Expression {
-	variable: one ParameterIdentifier
+	variable: one (ParameterIdentifier + FieldIdentifier)
 }
 
 // A variable accessed in the scope of a function or method body should exist.
@@ -123,9 +151,16 @@ fact ValidVariableAccess {
 		(v in f.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in f.parameters.name)
 	}
 	all m: MethodDecl, v: VariableAccess {
-		(v in m.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in m.parameters.name)
+		(v in m.body.statements.expression.*(left + right + arguments + concat)) implies (
+			(v.variable in m.parameters.name) or
+			(v.variable in m.~methods.*extend.fields.name))
 	}
 }
+
+pred testVar {
+	some f: FieldIdentifier, v: VariableAccess | f in v.variable
+}
+run testVar for 2
 
 sig FunctionCall extends Expression {
 	name: one FunctionIdentifier,
@@ -168,24 +203,24 @@ one sig TString extends PrimType {}
 //sig ObjectLiteralType extends Type {}
 
 -- ===== Commands =====
-pred default {
-	no StringConcat
-}
+pred default {}
 run default for 2
 
 // TODO: Add info about which refactorings correspond to which preds
 pred ConvertFunction {
 	(some f: FunctionDecl | #f.parameters > 1) or (some m: MethodDecl | #m.parameters > 1)
 }
-run ConvertFunction for 2
+run ConvertFunction for 2 but 0 Field, 0 StringConcat
 
 pred ConvertToTemplateString {
-	some StringConcat
-	all s: StringConcat { -- TODO: should we have this?
-		some v: VariableAccess | v in s.concat
-	}
+	one StringConcat
 }
 run ConvertToTemplateString for 2
+
+pred CreateGetAndSetAccessor {
+	some c: ClassDecl | #c.fields > 0
+}
+run CreateGetAndSetAccessor for 2 but 0 FunctionDecl, 0 StringConcat
 
 
 

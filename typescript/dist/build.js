@@ -1,6 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.buildProgram = exports.buildProject = void 0;
+var _ = require("lodash");
 var ts_morph_1 = require("ts-morph");
 var COMPILER_OPTIONS = {
     strict: true,
@@ -157,6 +158,7 @@ function buildFunctionCall(functionCall) {
 function buildStringConcat(stringConcat) {
     return buildStringConcatWorker(stringConcat.concat);
 }
+// Builds left-associative string/expression concatenation.
 function buildStringConcatWorker(strings) {
     if (strings.length === 0) {
         throw new Error("Expected at least one element in string concat array");
@@ -165,11 +167,13 @@ function buildStringConcatWorker(strings) {
         var s_1 = strings[0];
         return buildStringConcatElement(s_1);
     }
-    var s = strings[0], rest = strings.slice(1);
+    var rest = _.initial(strings);
+    var s = _.last(strings); // This cannot be undefined because strings.length > 1
+    // const [s, ...rest] = strings;
     return ts_morph_1.ts.createBinary(
-    /* left */ buildStringConcatElement(s), 
+    /* left */ buildStringConcatWorker(rest), 
     /* operator */ ts_morph_1.ts.SyntaxKind.PlusToken, 
-    /* right */ buildStringConcatWorker(rest));
+    /* right */ buildStringConcatElement(s));
 }
 function buildStringConcatElement(s) {
     switch (s.nodeType) {

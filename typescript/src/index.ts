@@ -4,9 +4,15 @@ import Ajv = require("ajv");
 import _ = require("lodash");
 
 import * as types from "./types";
-import { Project, ts, Diagnostic } from "ts-morph";
+import {
+    Project,
+    ts,
+    Diagnostic as TsDiagnostic,
+    ObjectBindingPattern,
+} from "ts-morph";
 import { assert } from "console";
 import { buildProject, buildProgram } from "./build";
+import { number } from "yargs";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
@@ -16,9 +22,10 @@ const SCHEMA: Schema = JSON.parse(
 
 interface CliOpts {
     solution: string;
-    refactorings: string[];
-    applyRefactorings: boolean;
+    refactoring: Refactoring;
+    applyRefactoring: boolean;
     result: string;
+    samplingRatio?: number;
     first?: number;
 }
 
@@ -30,13 +37,13 @@ function main(): void {
             type: "string",
             demandOption: true,
         })
-        .option("refactorings", {
+        .option("refactoring", {
             describe: "List of refactorings to be analyzed",
             type: "string",
-            array: true,
-            default: [],
+            choices: Object.values(Refactoring),
+            demandOption: true,
         })
-        .option("applyRefactorings", {
+        .option("applyRefactoring", {
             describe: "Whether we should apply the refactorings available",
             type: "boolean",
             default: false,
@@ -49,9 +56,21 @@ function main(): void {
         .option("first", {
             describe: "Consider only the first n solutions",
             type: "number",
-        }).argv;
+            conflicts: "samplingRatio",
+        })
+        .option("samplingRatio", {
+            describe:
+                "Percentage of the solutions that will be sampled (using random sampling)",
+            type: "number",
+            conflicts: "first",
+        })
+        .epilogue("TODO: epilogue").argv;
 
-    tsdolly(opts);
+    const cliOpts = {
+        ...opts,
+        refactoring: opts.refactoring as Refactoring,
+    };
+    tsdolly(cliOpts);
 }
 
 function tsdolly(opts: CliOpts): void {
@@ -63,19 +82,40 @@ function tsdolly(opts: CliOpts): void {
         throw ajv.errors;
     }
     let solutions = solutionsRaw as types.Solutions;
-    if (opts.first) {
-        assert(
-            opts.first >= 0,
-            `Expected option 'first' to be a natural number, but it is ${opts.first}.`
-        );
-        solutions = solutions.slice(0, opts.first);
-    }
+    const total = solutions.length;
+    solutions = sampleSolutions(solutions, opts);
 
-    console.log(`${solutions.length} solutions will be analyzed`);
+    console.log(`${solutions.length} solutions from a total of ${total} will be analyzed`);
     const programs = solutions.map(buildProgram);
     const results = analyzePrograms(programs, opts);
 
     printResults(results, opts);
+}
+
+function sampleSolutions(
+    solutions: types.Solutions,
+    opts: Pick<CliOpts, "first" | "samplingRatio">
+): types.Solutions {
+    if (opts.first) {
+        assert(
+            opts.first > 0,
+            `Expected option 'first' to be a positive integer, but it is ${opts.first}.`
+        );
+        assert(
+            opts.first <= solutions.length,
+            `Expected option 'first' to be at most the number of solutions (${solutions.length}), but it is ${opts.first}.`
+        );
+        return solutions.slice(0, opts.first);
+    }
+    if (opts.samplingRatio) {
+        assert(
+            opts.samplingRatio > 0 && opts.samplingRatio <= 100,
+            `Expected option 'samplingRatio' to be a percentage, that is, a number between 0 and 100, but it is ${opts.samplingRatio}.`
+        );
+        const size = (opts.samplingRatio / 100) * solutions.length;
+        solutions = _.sampleSize(solutions, size);
+    }
+    return solutions;
 }
 
 export interface Result {
@@ -83,7 +123,7 @@ export interface Result {
     refactors: RefactorInfo[];
 }
 
-interface Program {
+export interface Program {
     files: File[];
     diagnostics: Diagnostic[];
     errorMessage: string;
@@ -91,7 +131,7 @@ interface Program {
     compilerOptions: ts.CompilerOptions; // This is for sanity checking purposes.
 }
 
-interface File {
+export interface File {
     fileName: string;
     text: string;
 }
@@ -102,9 +142,7 @@ function printResults(results: Result[], opts: CliOpts): void {
     console.log(`Total programs: ${aggregate.total}
 Total programs that compile: ${aggregate.compiling}
 Compiling rate: ${aggregate.compileRate * 100}%`);
-    if (opts.refactorings) {
-        console.log(`Average of available refactors: ${aggregate.refactorAvg}`);
-    }
+    console.log(`Average of available refactors: ${aggregate.refactorAvg}`);
 
     const jsonResults = JSON.stringify(
         results,
@@ -121,7 +159,7 @@ Compiling rate: ${aggregate.compileRate * 100}%`);
     }
 }
 
-interface AggregateResult {
+export interface AggregateResult {
     total: number;
     compiling: number;
     compileRate: number;
@@ -149,13 +187,18 @@ function aggregateResults(results: Result[]): AggregateResult {
 }
 
 function analyzePrograms(programs: string[], opts: CliOpts): Result[] {
-    const refactoringPred = buildPredicate(opts.refactorings);
+    const refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
+    if (!refactoringPred) {
+        throw new Error(`Could not find node predicate for refactoring '${opts.refactoring}'.
+To try and apply a refactoring, you need to first implement a predicate over nodes.
+This predicate specifies to which nodes we should consider applying the refactoring.`);
+    }
     return programs.map((program, index) =>
         analyzeProgram(
             program,
             index,
-            opts.refactorings,
-            opts.applyRefactorings,
+            opts.refactoring,
+            opts.applyRefactoring,
             refactoringPred
         )
     );
@@ -164,8 +207,8 @@ function analyzePrograms(programs: string[], opts: CliOpts): Result[] {
 function analyzeProgram(
     program: string,
     index: number,
-    refactorings: CliOpts["refactorings"],
-    applyRefactorings: CliOpts["applyRefactorings"],
+    refactoring: CliOpts["refactoring"],
+    applyRefactoring: CliOpts["applyRefactoring"],
     refactoringPred: NodePredicate
 ): Result {
     console.log(`Starting to analyze program ${index}`);
@@ -181,8 +224,8 @@ function analyzeProgram(
     const refactorsInfo = getRefactorInfo(
         project,
         sourceFile.compilerNode,
-        applyRefactorings,
-        refactorings,
+        applyRefactoring,
+        refactoring,
         refactoringPred
     );
 
@@ -200,10 +243,10 @@ function projectToProgram(project: Project): Program {
             text: file.getFullText(),
         };
     });
-    const diagnostics = project.getPreEmitDiagnostics();
+    const diagnostics = project.getPreEmitDiagnostics().map(toDiagnostic);
     const hasError = diagnostics.length > 0;
     const errorMessage = project.formatDiagnosticsWithColorAndContext(
-        diagnostics
+        project.getPreEmitDiagnostics()
     );
     return {
         files,
@@ -211,6 +254,37 @@ function projectToProgram(project: Project): Program {
         errorMessage,
         hasError,
         compilerOptions: project.getCompilerOptions(),
+    };
+}
+
+export interface Diagnostic {
+    file?: string;
+    code: number;
+    line?: number;
+    start?: number;
+    length?: number;
+    category: ts.DiagnosticCategory;
+    messageText: string;
+}
+
+function toDiagnostic(diagnostic: TsDiagnostic): Diagnostic {
+    let messageText = "";
+    const msg = diagnostic.getMessageText();
+    if (typeof msg === "string") {
+        messageText = msg;
+    } else {
+        // If diagnostic message is a chain, we're only getting the first message.
+        messageText = msg.getMessageText();
+    }
+
+    return {
+        file: diagnostic.getSourceFile()?.getFilePath(),
+        code: diagnostic.getCode(),
+        line: diagnostic.getLineNumber(),
+        start: diagnostic.getStart(),
+        length: diagnostic.getLength(),
+        category: diagnostic.getCategory(),
+        messageText,
     };
 }
 
@@ -224,9 +298,14 @@ interface RefactorInfo {
     resultingProgram?: Program;
 }
 
-const REFACTOR_TO_PRED: Map<string, NodePredicate> = new Map([
-    ["Convert to template string", isStringConcat],
-    ["Convert parameters to destructured object", isParameter],
+enum Refactoring {
+    ConvertParamsToDestructuredObject = "Convert parameters to destructured object",
+    ConvertToTemplateString = "Convert to template string",
+}
+
+const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
+    [Refactoring.ConvertParamsToDestructuredObject, isParameter],
+    [Refactoring.ConvertToTemplateString, isStringConcat],
 ]);
 
 function isStringConcat(node: ts.Node) {
@@ -237,28 +316,11 @@ function isParameter(node: ts.Node) {
     return ts.isParameter(node);
 }
 
-function buildPredicate(enabledRefactorings: string[]): NodePredicate {
-    const preds: NodePredicate[] = [];
-    enabledRefactorings.forEach((refactoring) => {
-        const pred = REFACTOR_TO_PRED.get(refactoring);
-        if (!pred) {
-            throw new Error(`Could not find node predicate for refactoring '${refactoring}'.
-To try and apply a refactoring, you need to first implement a predicate over nodes.
-The predicate specifies to which nodes we should consider applying the refactoring.`);
-        }
-        preds.push(pred);
-    });
-
-    return function (node) {
-        return preds.some((pred) => pred(node));
-    };
-}
-
 function getRefactorInfo(
     project: Project,
     file: ts.SourceFile,
-    applyRefactorings: boolean,
-    enabledRefactorings: string[],
+    applyRefactoring: boolean,
+    enabledRefactoring: Refactoring,
     pred: NodePredicate
 ): RefactorInfo[] {
     let refactorsInfo: RefactorInfo[] = [];
@@ -267,23 +329,20 @@ function getRefactorInfo(
         _.isEqual(a.editInfo, b.editInfo)
     );
 
-    if (applyRefactorings) {
-        return refactorsInfo.map((refactorInfo) => {
-            return {
-                ...refactorInfo,
-                resultingProgram: getRefactorResult(project, refactorInfo),
-            };
-        });
+    if (applyRefactoring) {
+        for (const refactorInfo of refactorsInfo) {
+            refactorInfo.resultingProgram = getRefactorResult(
+                project,
+                refactorInfo
+            );
+        }
     }
     return refactorsInfo;
 
     function visit(node: ts.Node): void {
         if (pred(node)) {
-            const refactorInfo = getApplicableRefactors(
-                project,
-                node
-            ).filter((refactorInfo) =>
-                enabledRefactorings.includes(refactorInfo.name)
+            const refactorInfo = getApplicableRefactors(project, node).filter(
+                (refactorInfo) => enabledRefactoring === refactorInfo.name
             );
             refactorInfo.forEach((refactor) => {
                 refactor.actions.forEach((action) => {
@@ -400,18 +459,6 @@ ${message || ""}`);
 
     return arr[0];
 }
-
-// // This implementation was copied from TypeScript's `ts.textChanges.applyChanges`.
-// function applyChanges(text: string, changes: readonly ts.TextChange[]): string {
-//     for (const change of changes) {
-//         const { span, newText } = change;
-//         text = `${text.substring(0, span.start)}${newText}${text.substring(
-//             span.start + span.length
-//         )}`;
-//     }
-
-//     return text;
-// }
 
 if (!module.parent) {
     main();
