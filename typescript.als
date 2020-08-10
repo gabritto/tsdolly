@@ -95,9 +95,9 @@ fact ParameterDeclUniqueName {
 	all m: MethodDecl | all disj p1, p2: m.parameters | p1.name != p2.name
 }
 
--- ===== Statements & Expressions =====
+-- ===== Expressions =====
 sig Block {
-	statements: lone Statement -- Limit statements to avoid combinatorial explosion.
+	expression: lone Expression -- Limit statements to avoid combinatorial explosion.
 }
 
 fact BlockParent {
@@ -107,38 +107,30 @@ fact BlockParent {
 	}
 }
 
-abstract sig Statement {}
-
-fact StatementParent {
-	all s: Statement | one b: Block | s in b.statements
-}
-
 abstract sig Expression {}
 
 fact ExpressionParent {
 	all e: Expression {
-		one parent: Expression + Statement { 
+		one parent: Expression + Block { 
 			(e in parent.expression)
-			or (e in parent.left)
-			or (e in parent.right)
-			or (e in parent.arguments)
+			// or (e in parent.left)
+			// or (e in parent.right)
+			// or (e in parent.arguments)
+			or (e in parent.(FunctionCall <: arguments))
+			or (e in parent.(FunctionCall <: arguments))
 			or (e in parent.concat)
 		}
 	}
 }
 
-sig ExpressionStatement extends Statement {
-	expression: one Expression
-}
+// sig AssignmentExpression extends Expression {
+// 	left: one VariableAccess,
+// 	right: one Expression
+// }
 
-sig AssignmentExpression extends Expression {
-	left: one VariableAccess,
-	right: one Expression
-}
-
-fact AssignmentExpressionNoCycle {
-	all a: AssignmentExpression | a not in a.^right
-}
+// fact AssignmentExpressionNoCycle {
+// 	all a: AssignmentExpression | a not in a.^right
+// }
 
 sig VariableAccess extends Expression {
 	variable: one (ParameterIdentifier + FieldIdentifier)
@@ -148,19 +140,16 @@ sig VariableAccess extends Expression {
 // That is, there should be a function/method parameter with that same identifier.
 fact ValidVariableAccess {
 	all f: FunctionDecl, v: VariableAccess {
-		(v in f.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in f.parameters.name)
+		// (v in f.body.statements.expression.*(left + right + arguments + concat)) implies (v.variable in f.parameters.name)
+		(v in f.body.expression.*(FunctionCall <: arguments + concat)) implies (v.variable in f.parameters.name)
 	}
 	all m: MethodDecl, v: VariableAccess {
-		(v in m.body.statements.expression.*(left + right + arguments + concat)) implies (
+		// (v in m.body.statements.expression.*(left + right + arguments + concat)) implies (
+		(v in m.body.expression.*(MethodCall <: arguments + concat)) implies (
 			(v.variable in m.parameters.name) or
 			(v.variable in m.~methods.*extend.fields.name))
 	}
 }
-
-pred testVar {
-	some f: FieldIdentifier, v: VariableAccess | f in v.variable
-}
-run testVar for 2
 
 sig FunctionCall extends Expression {
 	name: one FunctionIdentifier,
@@ -172,8 +161,35 @@ fact FunctionCalledExists {
 }
 
 fact FunctionCallArity {
-	all c: FunctionCall, f: FunctionDecl | c.name = f.name => #c.arguments = #f.parameters
+	all c: FunctionCall, f: FunctionDecl | c.name = f.name implies #c.arguments = #f.parameters
 }
+
+sig MethodCall extends Expression {
+	name: one MethodIdentifier,
+	arguments: set VariableAccess
+}
+
+fact MethodCalledExists {
+	all mc: MethodCall | some m: MethodDecl {
+		mc.name = m.name
+		all m1: MethodDecl {
+			mc in m1.body.expression implies {
+				m in m1.~methods.*extend.methods
+			}
+		}
+	}
+}
+
+fact MethodCallArity {
+	all c: MethodCall, m: MethodDecl {
+		c.name = m.name implies #c.arguments = #m.parameters
+	}
+}
+
+pred methodCallTest {
+	some m: MethodCall | #m.arguments > 0
+}
+run methodCallTest for 2
 
 lone sig StringConcat extends Expression {
 	concat: set (StringLiteral + VariableAccess)
@@ -204,7 +220,7 @@ one sig TString extends PrimType {}
 
 -- ===== Commands =====
 pred default {}
-run default for 2
+run default for 1
 
 // TODO: Add info about which refactorings correspond to which preds
 pred ConvertFunction {
@@ -215,12 +231,17 @@ run ConvertFunction for 2 but 0 Field, 0 StringConcat
 pred ConvertToTemplateString {
 	one StringConcat
 }
-run ConvertToTemplateString for 2
+run ConvertToTemplateString for 1 but 2 Expression, 2 StringLiteral
+
+// pred StrConc {
+// 	some s: StringConcat, f: Field | f.name in s.concat.variable
+// }
+// run StrConc for 1 but 2 Expression
 
 pred CreateGetAndSetAccessor {
 	some c: ClassDecl | #c.fields > 0
 }
-run CreateGetAndSetAccessor for 2 but 0 FunctionDecl, 0 StringConcat
+run CreateGetAndSetAccessor for 2 but 1 Field, 0 FunctionDecl, 0 StringConcat
 
 
 
