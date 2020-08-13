@@ -17,14 +17,17 @@ import java.util.stream.Collectors;
 @Command(description = "Generates solutions in JSON format for an Alloy model and command.",
         name = "generate", mixinStandardHelpOptions = true)
 public class Generate implements Callable<Integer> {
-    @Option(names = {"-c", "--command"}, description = "alloy command to run", defaultValue = "default")
+    @Option(names = {"-c", "--command"}, description = "Alloy command to run", defaultValue = "default")
     private String command;
 
-    @Option(names = {"-m", "--model"}, description = "alloy model file", defaultValue = "../typescript.als")
+    @Option(names = {"-m", "--model"}, description = "Alloy model file", defaultValue = "../typescript.als")
     private File alloyTheory;
 
-    @Option(names = {"-o", "--output"}, description = "output file", defaultValue = "../output/alloySolutions.json")
+    @Option(names = {"-o", "--output"}, description = "Output file", defaultValue = "../output/alloySolutions.json")
     private File outputPath;
+
+    @Option(names = {"--count"}, description = "Count solutions")
+    private boolean count;
 
     private static void writeAllSolutions(A4Solution solution, OutputStreamWriter writer) throws IOException {
         int solutionsCount = 0;
@@ -42,6 +45,15 @@ public class Generate implements Callable<Integer> {
         }
         writer.write("\n]");
         System.out.println(String.format("Total solutions: %d", solutionsCount));
+    }
+
+    private static int countSolutions(A4Solution solution) {
+        int count = 0;
+        while (solution.satisfiable()) {
+            count += 1;
+            solution = solution.next();
+        }
+        return count;
     }
 
     private static A4Reporter createA4Reporter() { // TODO: review this
@@ -73,10 +85,16 @@ public class Generate implements Callable<Integer> {
 
         System.out.println(String.format("Running command '%s'", cmd.label));
         var solution = TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options);
-        try (OutputStreamWriter writer =
-                     new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(this.outputPath)),
-                             StandardCharsets.UTF_8)) {
-            writeAllSolutions(solution, writer);
+        if (this.count) {
+            System.out.println("Counting solutions...");
+            System.out.println(String.format("Total solutions: %d", countSolutions(solution)));
+        }
+        else {
+            try (OutputStreamWriter writer =
+                         new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(this.outputPath)),
+                                 StandardCharsets.UTF_8)) {
+                writeAllSolutions(solution, writer);
+            }
         }
         return 0;
     }
