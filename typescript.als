@@ -241,6 +241,9 @@ one sig TString extends PrimType {}
 pred default {}
 run default for 2
 
+pred small {}
+run small for 1
+
 // TODO: Add info about which refactorings correspond to which preds
 pred ConvertFunction {
 	(some f: FunctionDecl | #f.parameters > 1) or (some m: MethodDecl | #m.parameters > 1)

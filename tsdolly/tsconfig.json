@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "module": "CommonJs",
+        "preserveConstEnums": true,
+        "outDir": "typescript/dist",
+        "strict": true,
+        "sourceMap": true
+    },
+    "include": ["typescript/src/**/*"]
+}
