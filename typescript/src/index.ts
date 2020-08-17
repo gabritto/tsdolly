@@ -4,15 +4,9 @@ import Ajv = require("ajv");
 import _ = require("lodash");
 
 import * as types from "./types";
-import {
-    Project,
-    ts,
-    Diagnostic as TsDiagnostic,
-    ObjectBindingPattern,
-} from "ts-morph";
+import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
 import { assert } from "console";
 import { buildProject, buildProgram } from "./build";
-import { number } from "yargs";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
@@ -25,7 +19,7 @@ interface CliOpts {
     refactoring: Refactoring;
     applyRefactoring: boolean;
     result: string;
-    samplingRatio?: number;
+    skip?: number;
     first?: number;
 }
 
@@ -56,9 +50,9 @@ function main(): void {
         .option("first", {
             describe: "Consider only the first n solutions",
             type: "number",
-            conflicts: "samplingRatio",
+            conflicts: "skip",
         })
-        .option("samplingRatio", {
+        .option("skip", {
             describe:
                 "Percentage of the solutions that will be sampled (using random sampling)",
             type: "number",
@@ -85,7 +79,9 @@ function tsdolly(opts: CliOpts): void {
     const total = solutions.length;
     solutions = sampleSolutions(solutions, opts);
 
-    console.log(`${solutions.length} solutions from a total of ${total} will be analyzed`);
+    console.log(
+        `${solutions.length} solutions from a total of ${total} will be analyzed`
+    );
     const programs = solutions.map(buildProgram);
     const results = analyzePrograms(programs, opts);
 
@@ -94,7 +90,7 @@ function tsdolly(opts: CliOpts): void {
 
 function sampleSolutions(
     solutions: types.Solutions,
-    opts: Pick<CliOpts, "first" | "samplingRatio">
+    opts: Pick<CliOpts, "first" | "skip">
 ): types.Solutions {
     if (opts.first) {
         assert(
@@ -107,15 +103,29 @@ function sampleSolutions(
         );
         return solutions.slice(0, opts.first);
     }
-    if (opts.samplingRatio) {
+    if (opts.skip) {
         assert(
-            opts.samplingRatio > 0 && opts.samplingRatio <= 100,
-            `Expected option 'samplingRatio' to be a percentage, that is, a number between 0 and 100, but it is ${opts.samplingRatio}.`
+            opts.skip > 0,
+            `Expected option 'skip' to be a positive integer, but it is ${opts.skip}.`
         );
-        const size = (opts.samplingRatio / 100) * solutions.length;
-        solutions = _.sampleSize(solutions, size);
+        assert(
+            opts.skip <= solutions.length,
+            `Expected option 'skip' to be at most the number of solutions (${solutions.length}), but it is ${opts.skip}.`
+        );
+        return sample(solutions, opts.skip);
     }
     return solutions;
+}
+
+function sample(solutions: types.Solutions, skip: number): types.Solutions {
+    const sampledSolutions: types.Solutions = [];
+    for (let start = 0; start < solutions.length; start += skip) {
+        const end = Math.min(start + skip, solutions.length);
+        // We want an element between [start, end).
+        const index = _.random(start, end - 1, false);
+        sampledSolutions.push(solutions[index]);
+    }
+    return sampledSolutions;
 }
 
 export interface Result {
@@ -125,8 +135,7 @@ export interface Result {
 
 export interface Program {
     files: File[];
-    diagnostics: Diagnostic[];
-    errorMessage: string;
+    errors: CompilerError[];
     hasError: boolean;
     compilerOptions: ts.CompilerOptions; // This is for sanity checking purposes.
 }
@@ -205,7 +214,7 @@ This predicate specifies to which nodes we should consider applying the refactor
 }
 
 function analyzeProgram(
-    program: string,
+    programText: string,
     index: number,
     refactoring: CliOpts["refactoring"],
     applyRefactoring: CliOpts["applyRefactoring"],
@@ -214,15 +223,14 @@ function analyzeProgram(
     console.log(`Starting to analyze program ${index}`);
     // const filePath = `../output/programs/program_${index}.ts`;
     const filePath = "program.ts";
-    const project = buildProject(program, filePath);
+    const project = buildProject(programText, filePath);
     const sourceFile = project.getSourceFileOrThrow(filePath);
-
-    // Compiling info
-    const diagnostics = sourceFile.getPreEmitDiagnostics();
+    const program = projectToProgram(project);
 
     // Refactor info
     const refactorsInfo = getRefactorInfo(
         project,
+        program,
         sourceFile.compilerNode,
         applyRefactoring,
         refactoring,
@@ -231,7 +239,7 @@ function analyzeProgram(
 
     console.log(`Finished analyzing program ${index}`);
     return {
-        program: projectToProgram(project),
+        program,
         refactors: refactorsInfo,
     };
 }
@@ -243,21 +251,17 @@ function projectToProgram(project: Project): Program {
             text: file.getFullText(),
         };
     });
-    const diagnostics = project.getPreEmitDiagnostics().map(toDiagnostic);
+    const diagnostics = getCompilerError(project);
     const hasError = diagnostics.length > 0;
-    const errorMessage = project.formatDiagnosticsWithColorAndContext(
-        project.getPreEmitDiagnostics()
-    );
     return {
         files,
-        diagnostics,
-        errorMessage,
+        errors: diagnostics,
         hasError,
         compilerOptions: project.getCompilerOptions(),
     };
 }
 
-export interface Diagnostic {
+export interface CompilerError {
     file?: string;
     code: number;
     line?: number;
@@ -267,7 +271,12 @@ export interface Diagnostic {
     messageText: string;
 }
 
-function toDiagnostic(diagnostic: TsDiagnostic): Diagnostic {
+function getCompilerError(project: Project): CompilerError[] {
+    const tsDiagnostics = project.getPreEmitDiagnostics().filter(d => d.getCategory() === ts.DiagnosticCategory.Error);
+    return tsDiagnostics.map(diagnosticToCompilerError);
+}
+
+function diagnosticToCompilerError(diagnostic: TsDiagnostic): CompilerError {
     let messageText = "";
     const msg = diagnostic.getMessageText();
     if (typeof msg === "string") {
@@ -296,16 +305,23 @@ interface RefactorInfo {
     triggeringRange: ts.TextRange;
     editInfo: ts.RefactorEditInfo;
     resultingProgram?: Program;
+    introducesError?: boolean;
 }
 
 enum Refactoring {
     ConvertParamsToDestructuredObject = "Convert parameters to destructured object",
     ConvertToTemplateString = "Convert to template string",
+    GenerateGetAndSetAccessors = "Generate 'get' and 'set' accessors",
+    ExtractSymbol = "Extract Symbol",
+    MoveToNewFile = "Move to a new file",
 }
 
 const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
     [Refactoring.ConvertParamsToDestructuredObject, isParameter],
     [Refactoring.ConvertToTemplateString, isStringConcat],
+    [Refactoring.GenerateGetAndSetAccessors, isField],
+    [Refactoring.ExtractSymbol, isCallOrLiteral],
+    [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
 
 function isStringConcat(node: ts.Node) {
@@ -316,8 +332,21 @@ function isParameter(node: ts.Node) {
     return ts.isParameter(node);
 }
 
+function isField(node: ts.Node) {
+    return ts.isPropertyDeclaration(node);
+}
+
+function isCallOrLiteral(node: ts.Node) {
+    return ts.isCallExpression(node) || ts.isLiteralExpression(node);
+}
+
+function isTopLevelDeclaration(node: ts.Node) {
+    return ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node);
+}
+
 function getRefactorInfo(
     project: Project,
+    program: Program,
     file: ts.SourceFile,
     applyRefactoring: boolean,
     enabledRefactoring: Refactoring,
@@ -335,6 +364,9 @@ function getRefactorInfo(
                 project,
                 refactorInfo
             );
+            if (refactorInfo.resultingProgram.hasError && !program.hasError) {
+                refactorInfo.introducesError = true;
+            }
         }
     }
     return refactorsInfo;

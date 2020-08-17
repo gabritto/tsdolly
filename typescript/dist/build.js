@@ -3,6 +3,8 @@ exports.__esModule = true;
 exports.buildProgram = exports.buildProject = void 0;
 var _ = require("lodash");
 var ts_morph_1 = require("ts-morph");
+var toposort_1 = require("./toposort");
+var console_1 = require("console");
 var COMPILER_OPTIONS = {
     strict: true,
     target: ts_morph_1.ts.ScriptTarget.Latest,
@@ -15,7 +17,7 @@ function buildProject(program, filePath) {
 }
 exports.buildProject = buildProject;
 function buildProgram(program) {
-    var declarations = ts_morph_1.ts.createNodeArray(program.declarations.map(buildDeclaration));
+    var declarations = ts_morph_1.ts.createNodeArray(sortDeclarations(program.declarations).map(buildDeclaration));
     var file = ts_morph_1.ts.createSourceFile("program.ts", "", COMPILER_OPTIONS.target, 
     /* setParentNodes */ false, ts_morph_1.ts.ScriptKind.TS); // TODO: refactor to use same options
     var printer = ts_morph_1.ts.createPrinter({ newLine: ts_morph_1.ts.NewLineKind.LineFeed });
@@ -23,6 +25,34 @@ function buildProgram(program) {
     return result;
 }
 exports.buildProgram = buildProgram;
+function sortDeclarations(declarations) {
+    var n = declarations.length;
+    var edges = new Array(n);
+    _.fill(edges, []);
+    var _loop_1 = function (d) {
+        var decl = declarations[d];
+        if (decl.nodeType === "ClassDecl" && decl.extend) {
+            var parent_1 = _.findIndex(declarations, function (d) {
+                var _a;
+                return d.nodeType === "ClassDecl" &&
+                    d.nodeId === ((_a = decl.extend) === null || _a === void 0 ? void 0 : _a.nodeId);
+            });
+            console_1.assert(parent_1 >= 0, "Class " + getIdentifier(decl.extend.name) + " should exist among declarations");
+            edges[d].push(parent_1);
+        }
+    };
+    for (var d = 0; d < declarations.length; d++) {
+        _loop_1(d);
+    }
+    var sort = toposort_1.toposort(edges);
+    var sortedDeclarations = [];
+    for (var _i = 0, sort_1 = sort; _i < sort_1.length; _i++) {
+        var idx = sort_1[_i];
+        sortedDeclarations.push(declarations[idx]);
+    }
+    console_1.assert(sortedDeclarations.length === declarations.length);
+    return sortedDeclarations;
+}
 function buildDeclaration(declaration) {
     switch (declaration.nodeType) {
         case "FunctionDecl":
@@ -59,6 +89,7 @@ function buildClassDecl(classDecl) {
         heritageClauses.push(heritageClause);
     }
     var methods = classDecl.methods.map(buildMethodDecl);
+    var fields = classDecl.fields.map(buildField);
     return ts_morph_1.ts.createClassDeclaration(
     /* decorators */ undefined, 
     /* modifiers */ undefined, 
@@ -66,6 +97,17 @@ function buildClassDecl(classDecl) {
     /* typeParameters */ undefined, 
     /* heritageClauses */ heritageClauses, 
     /* members */ methods);
+}
+function buildField(field) {
+    var name = ts_morph_1.ts.createIdentifier(getIdentifier(field.name));
+    var type = buildType(field.type);
+    return ts_morph_1.ts.createProperty(
+    /* decorators */ undefined, 
+    /* modifiers */ [ts_morph_1.ts.createToken(ts_morph_1.ts.SyntaxKind.PrivateKeyword)], 
+    /* name */ name, 
+    /* questionOrExclamationToken */ ts_morph_1.ts.createToken(ts_morph_1.ts.SyntaxKind.QuestionToken), 
+    /* type */ type, 
+    /* initializer */ undefined);
 }
 function buildMethodDecl(methodDecl) {
     var name = getIdentifier(methodDecl.name);
@@ -110,42 +152,29 @@ function buildPrimType(type) {
     }
 }
 function buildBlock(block) {
-    var statements = block.statements.map(buildStatement);
-    return ts_morph_1.ts.createBlock(/* statements */ statements, /* multiline */ true);
-}
-function buildStatement(statement) {
-    switch (statement.nodeType) {
-        case "ExpressionStatement":
-            return buildExpressionStatement(statement);
+    var statements = [];
+    if (block.expression) {
+        statements = [
+            ts_morph_1.ts.createExpressionStatement(buildExpression(block.expression)),
+        ];
     }
-}
-function buildExpressionStatement(expressionStatement) {
-    var expression = buildExpression(expressionStatement.expression);
-    return ts_morph_1.ts.createExpressionStatement(expression);
+    return ts_morph_1.ts.createBlock(/* statements */ statements, /* multiline */ true);
 }
 function buildExpression(expression) {
     switch (expression.nodeType) {
         case "VariableAccess":
             return buildVariableAccess(expression);
-        case "AssignmentExpression":
-            return buildAssignmentExpression(expression);
         case "FunctionCall":
             return buildFunctionCall(expression);
         case "StringConcat":
             return buildStringConcat(expression);
+        case "MethodCall":
+            return buildMethodCall(expression);
     }
 }
 function buildVariableAccess(variableAccess) {
     var identifier = getIdentifier(variableAccess.variable);
     return ts_morph_1.ts.createIdentifier(identifier);
-}
-function buildAssignmentExpression(assignmentExpression) {
-    var left = buildVariableAccess(assignmentExpression.left);
-    var right = buildExpression(assignmentExpression.right);
-    return ts_morph_1.ts.createBinary(
-    /* left */ left, 
-    /* operator */ ts_morph_1.ts.SyntaxKind.EqualsToken, 
-    /* right */ right);
 }
 function buildFunctionCall(functionCall) {
     var identifier = ts_morph_1.ts.createIdentifier(getIdentifier(functionCall.name));
@@ -185,6 +214,17 @@ function buildStringConcatElement(s) {
 }
 function buildStringLiteral(stringLiteral) {
     return ts_morph_1.ts.createStringLiteral(stringLiteral.nodeId);
+}
+function buildMethodCall(methodCall) {
+    var identifier = ts_morph_1.ts.createIdentifier(getIdentifier(methodCall.name));
+    var args = methodCall.arguments.map(buildExpression);
+    var thisExpression = ts_morph_1.ts.createPropertyAccess(
+    /* expression */ ts_morph_1.ts.createThis(), 
+    /* name */ identifier);
+    return ts_morph_1.ts.createCall(
+    /* expression */ thisExpression, 
+    /* typeArguments */ undefined, 
+    /* argumentsArray */ args);
 }
 function getIdentifier(identifier) {
     // switch (identifier.nodeType) {

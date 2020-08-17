@@ -1,44 +1,21 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
-        "AssignmentExpression": {
-            "additionalProperties": false,
-            "properties": {
-                "left": {
-                    "$ref": "#/definitions/VariableAccess"
-                },
-                "nodeId": {
-                    "type": "string"
-                },
-                "nodeType": {
-                    "enum": ["AssignmentExpression"],
-                    "type": "string"
-                },
-                "right": {
-                    "$ref": "#/definitions/Expression"
-                }
-            },
-            "required": ["left", "nodeId", "nodeType", "right"],
-            "type": "object"
-        },
         "Block": {
             "additionalProperties": false,
             "properties": {
+                "expression": {
+                    "$ref": "#/definitions/Expression"
+                },
                 "nodeId": {
                     "type": "string"
                 },
                 "nodeType": {
                     "enum": ["Block"],
                     "type": "string"
-                },
-                "statements": {
-                    "items": {
-                        "$ref": "#/definitions/Statement"
-                    },
-                    "type": "array"
                 }
             },
-            "required": ["nodeId", "nodeType", "statements"],
+            "required": ["nodeId", "nodeType"],
             "type": "object"
         },
         "ClassDecl": {
@@ -46,6 +23,12 @@
             "properties": {
                 "extend": {
                     "$ref": "#/definitions/ClassDecl"
+                },
+                "fields": {
+                    "items": {
+                        "$ref": "#/definitions/Field"
+                    },
+                    "type": "array"
                 },
                 "methods": {
                     "items": {
@@ -64,7 +47,7 @@
                     "type": "string"
                 }
             },
-            "required": ["methods", "name", "nodeId", "nodeType"],
+            "required": ["fields", "methods", "name", "nodeId", "nodeType"],
             "type": "object"
         },
         "ClassIdentifier": {
@@ -94,9 +77,6 @@
         "Expression": {
             "anyOf": [
                 {
-                    "$ref": "#/definitions/AssignmentExpression"
-                },
-                {
                     "$ref": "#/definitions/VariableAccess"
                 },
                 {
@@ -104,24 +84,47 @@
                 },
                 {
                     "$ref": "#/definitions/StringConcat"
+                },
+                {
+                    "$ref": "#/definitions/MethodCall"
                 }
             ]
         },
-        "ExpressionStatement": {
+        "Field": {
             "additionalProperties": false,
             "properties": {
-                "expression": {
-                    "$ref": "#/definitions/Expression"
+                "name": {
+                    "$ref": "#/definitions/FieldIdentifier"
                 },
                 "nodeId": {
                     "type": "string"
                 },
                 "nodeType": {
-                    "enum": ["ExpressionStatement"],
+                    "enum": ["Field"],
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/Type"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/Private"
+                }
+            },
+            "required": ["name", "nodeId", "nodeType", "type"],
+            "type": "object"
+        },
+        "FieldIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["FieldIdentifier"],
                     "type": "string"
                 }
             },
-            "required": ["expression", "nodeId", "nodeType"],
+            "required": ["nodeId", "nodeType"],
             "type": "object"
         },
         "FunctionCall": {
@@ -200,8 +203,34 @@
                 },
                 {
                     "$ref": "#/definitions/MethodIdentifier"
+                },
+                {
+                    "$ref": "#/definitions/FieldIdentifier"
                 }
             ]
+        },
+        "MethodCall": {
+            "additionalProperties": false,
+            "properties": {
+                "arguments": {
+                    "items": {
+                        "$ref": "#/definitions/VariableAccess"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "$ref": "#/definitions/MethodIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["MethodCall"],
+                    "type": "string"
+                }
+            },
+            "required": ["arguments", "name", "nodeId", "nodeType"],
+            "type": "object"
         },
         "MethodDecl": {
             "additionalProperties": false,
@@ -300,6 +329,20 @@
                 }
             ]
         },
+        "Private": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["Private"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
         "Program": {
             "additionalProperties": false,
             "properties": {
@@ -325,9 +368,6 @@
                 "$ref": "#/definitions/Program"
             },
             "type": "array"
-        },
-        "Statement": {
-            "$ref": "#/definitions/ExpressionStatement"
         },
         "StringConcat": {
             "additionalProperties": false,

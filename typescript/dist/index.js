@@ -46,9 +46,9 @@ function main() {
         .option("first", {
         describe: "Consider only the first n solutions",
         type: "number",
-        conflicts: "samplingRatio"
+        conflicts: "skip"
     })
-        .option("samplingRatio", {
+        .option("skip", {
         describe: "Percentage of the solutions that will be sampled (using random sampling)",
         type: "number",
         conflicts: "first"
@@ -79,12 +79,22 @@ function sampleSolutions(solutions, opts) {
         console_1.assert(opts.first <= solutions.length, "Expected option 'first' to be at most the number of solutions (" + solutions.length + "), but it is " + opts.first + ".");
         return solutions.slice(0, opts.first);
     }
-    if (opts.samplingRatio) {
-        console_1.assert(opts.samplingRatio > 0 && opts.samplingRatio <= 100, "Expected option 'samplingRatio' to be a percentage, that is, a number between 0 and 100, but it is " + opts.samplingRatio + ".");
-        var size = (opts.samplingRatio / 100) * solutions.length;
-        solutions = _.sampleSize(solutions, size);
+    if (opts.skip) {
+        console_1.assert(opts.skip > 0, "Expected option 'skip' to be a positive integer, but it is " + opts.skip + ".");
+        console_1.assert(opts.skip <= solutions.length, "Expected option 'skip' to be at most the number of solutions (" + solutions.length + "), but it is " + opts.skip + ".");
+        return sample(solutions, opts.skip);
     }
     return solutions;
+}
+function sample(solutions, skip) {
+    var sampledSolutions = [];
+    for (var start = 0; start < solutions.length; start += skip) {
+        var end = Math.min(start + skip, solutions.length);
+        // We want an element between [start, end).
+        var index = _.random(start, end - 1, false);
+        sampledSolutions.push(solutions[index]);
+    }
+    return sampledSolutions;
 }
 function printResults(results, opts) {
     var aggregate = aggregateResults(results);
@@ -129,19 +139,18 @@ function analyzePrograms(programs, opts) {
         return analyzeProgram(program, index, opts.refactoring, opts.applyRefactoring, refactoringPred);
     });
 }
-function analyzeProgram(program, index, refactoring, applyRefactoring, refactoringPred) {
+function analyzeProgram(programText, index, refactoring, applyRefactoring, refactoringPred) {
     console.log("Starting to analyze program " + index);
     // const filePath = `../output/programs/program_${index}.ts`;
     var filePath = "program.ts";
-    var project = build_1.buildProject(program, filePath);
+    var project = build_1.buildProject(programText, filePath);
     var sourceFile = project.getSourceFileOrThrow(filePath);
-    // Compiling info
-    var diagnostics = sourceFile.getPreEmitDiagnostics();
+    var program = projectToProgram(project);
     // Refactor info
-    var refactorsInfo = getRefactorInfo(project, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
+    var refactorsInfo = getRefactorInfo(project, program, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
     console.log("Finished analyzing program " + index);
     return {
-        program: projectToProgram(project),
+        program: program,
         refactors: refactorsInfo
     };
 }
@@ -152,18 +161,20 @@ function projectToProgram(project) {
             text: file.getFullText()
         };
     });
-    var diagnostics = project.getPreEmitDiagnostics().map(toDiagnostic);
+    var diagnostics = getCompilerError(project);
     var hasError = diagnostics.length > 0;
-    var errorMessage = project.formatDiagnosticsWithColorAndContext(project.getPreEmitDiagnostics());
     return {
         files: files,
-        diagnostics: diagnostics,
-        errorMessage: errorMessage,
+        errors: diagnostics,
         hasError: hasError,
         compilerOptions: project.getCompilerOptions()
     };
 }
-function toDiagnostic(diagnostic) {
+function getCompilerError(project) {
+    var tsDiagnostics = project.getPreEmitDiagnostics().filter(function (d) { return d.getCategory() === ts_morph_1.ts.DiagnosticCategory.Error; });
+    return tsDiagnostics.map(diagnosticToCompilerError);
+}
+function diagnosticToCompilerError(diagnostic) {
     var _a;
     var messageText = "";
     var msg = diagnostic.getMessageText();
@@ -188,10 +199,16 @@ var Refactoring;
 (function (Refactoring) {
     Refactoring["ConvertParamsToDestructuredObject"] = "Convert parameters to destructured object";
     Refactoring["ConvertToTemplateString"] = "Convert to template string";
+    Refactoring["GenerateGetAndSetAccessors"] = "Generate 'get' and 'set' accessors";
+    Refactoring["ExtractSymbol"] = "Extract Symbol";
+    Refactoring["MoveToNewFile"] = "Move to a new file";
 })(Refactoring || (Refactoring = {}));
 var REFACTOR_TO_PRED = new Map([
     [Refactoring.ConvertParamsToDestructuredObject, isParameter],
     [Refactoring.ConvertToTemplateString, isStringConcat],
+    [Refactoring.GenerateGetAndSetAccessors, isField],
+    [Refactoring.ExtractSymbol, isCallOrLiteral],
+    [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
 function isStringConcat(node) {
     return ts_morph_1.ts.isBinaryExpression(node); // TODO: can we add more checks to this?
@@ -199,7 +216,16 @@ function isStringConcat(node) {
 function isParameter(node) {
     return ts_morph_1.ts.isParameter(node);
 }
-function getRefactorInfo(project, file, applyRefactoring, enabledRefactoring, pred) {
+function isField(node) {
+    return ts_morph_1.ts.isPropertyDeclaration(node);
+}
+function isCallOrLiteral(node) {
+    return ts_morph_1.ts.isCallExpression(node) || ts_morph_1.ts.isLiteralExpression(node);
+}
+function isTopLevelDeclaration(node) {
+    return ts_morph_1.ts.isFunctionDeclaration(node) || ts_morph_1.ts.isClassDeclaration(node);
+}
+function getRefactorInfo(project, program, file, applyRefactoring, enabledRefactoring, pred) {
     var refactorsInfo = [];
     visit(file);
     refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
@@ -209,6 +235,9 @@ function getRefactorInfo(project, file, applyRefactoring, enabledRefactoring, pr
         for (var _i = 0, refactorsInfo_1 = refactorsInfo; _i < refactorsInfo_1.length; _i++) {
             var refactorInfo = refactorsInfo_1[_i];
             refactorInfo.resultingProgram = getRefactorResult(project, refactorInfo);
+            if (refactorInfo.resultingProgram.hasError && !program.hasError) {
+                refactorInfo.introducesError = true;
+            }
         }
     }
     return refactorsInfo;

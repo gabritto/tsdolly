@@ -1,3 +1,5 @@
+import { PrivateIdentifier } from "ts-morph";
+
 export type Solutions = Program[];
 
 export interface Node {
@@ -10,7 +12,8 @@ export type Identifier =
     | FunctionIdentifier
     | ParameterIdentifier
     | ClassIdentifier
-    | MethodIdentifier;
+    | MethodIdentifier
+    | FieldIdentifier;
 
 export interface FunctionIdentifier extends Node {
     nodeType: "FunctionIdentifier";
@@ -26,6 +29,10 @@ export interface ClassIdentifier extends Node {
 
 export interface MethodIdentifier extends Node {
     nodeType: "MethodIdentifier";
+}
+
+export interface FieldIdentifier extends Node {
+    nodeType: "FieldIdentifier";
 }
 
 // Program
@@ -51,6 +58,19 @@ export interface ClassDecl extends Node {
     name: ClassIdentifier;
     extend?: ClassDecl;
     methods: MethodDecl[];
+    fields: Field[];
+}
+
+// Field
+export interface Field extends Node {
+    nodeType: "Field";
+    name: FieldIdentifier;
+    type: Type;
+    visibility?: Private;
+}
+
+export interface Private extends Node {
+    nodeType: "Private";
 }
 
 // Method
@@ -71,27 +91,18 @@ export interface ParameterDecl extends Node {
 // Statements & Expressions
 export interface Block extends Node {
     nodeType: "Block";
-    statements: Statement[];
-}
-
-export type Statement = ExpressionStatement;
-
-export interface ExpressionStatement extends Node {
-    nodeType: "ExpressionStatement";
-    expression: Expression;
+    expression?: Expression;
 }
 
 export type Expression =
-    | AssignmentExpression
-    | VariableAccess
-    | FunctionCall
-    | StringConcat;
+    // | AssignmentExpression
+    VariableAccess | FunctionCall | StringConcat | MethodCall;
 
-export interface AssignmentExpression extends Node {
-    nodeType: "AssignmentExpression";
-    left: VariableAccess;
-    right: Expression;
-}
+// export interface AssignmentExpression extends Node {
+//     nodeType: "AssignmentExpression";
+//     left: VariableAccess;
+//     right: Expression;
+// }
 
 export interface VariableAccess extends Node {
     nodeType: "VariableAccess";
@@ -101,6 +112,12 @@ export interface VariableAccess extends Node {
 export interface FunctionCall extends Node {
     nodeType: "FunctionCall";
     name: FunctionIdentifier;
+    arguments: VariableAccess[];
+}
+
+export interface MethodCall extends Node {
+    nodeType: "MethodCall";
+    name: MethodIdentifier;
     arguments: VariableAccess[];
 }
 

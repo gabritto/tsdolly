@@ -2,6 +2,8 @@ import _ = require("lodash");
 
 import { ts, Project } from "ts-morph";
 import * as types from "./types";
+import { toposort } from "./toposort";
+import { assert } from "console";
 
 const COMPILER_OPTIONS = {
     strict: true,
@@ -17,7 +19,7 @@ export function buildProject(program: string, filePath: string): Project {
 
 export function buildProgram(program: types.Program): string {
     const declarations = ts.createNodeArray(
-        program.declarations.map(buildDeclaration)
+        sortDeclarations(program.declarations).map(buildDeclaration)
     );
     const file = ts.createSourceFile(
         "program.ts",
@@ -34,6 +36,41 @@ export function buildProgram(program: types.Program): string {
         file
     );
     return result;
+}
+
+function sortDeclarations(
+    declarations: types.Declaration[]
+): types.Declaration[] {
+    const n = declarations.length;
+    const edges = new Array<number[]>(n);
+    _.fill(edges, []);
+    for (let d = 0; d < declarations.length; d++) {
+        const decl = declarations[d];
+        if (decl.nodeType === "ClassDecl" && decl.extend) {
+            const parent = _.findIndex(
+                declarations,
+                (d) =>
+                    d.nodeType === "ClassDecl" &&
+                    d.nodeId === decl.extend?.nodeId
+            );
+            assert(
+                parent >= 0,
+                `Class ${getIdentifier(
+                    decl.extend.name
+                )} should exist among declarations`
+            );
+            edges[d].push(parent);
+        }
+    }
+
+    const sort = toposort(edges);
+    const sortedDeclarations: types.Declaration[] = [];
+    for (const idx of sort) {
+        sortedDeclarations.push(declarations[idx]);
+    }
+
+    assert(sortedDeclarations.length === declarations.length);
+    return sortedDeclarations;
 }
 
 function buildDeclaration(declaration: types.Declaration): ts.Declaration {
@@ -84,6 +121,8 @@ function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
 
     const methods = classDecl.methods.map(buildMethodDecl);
 
+    const fields = classDecl.fields.map(buildField);
+
     return ts.createClassDeclaration(
         /* decorators */ undefined,
         /* modifiers */ undefined,
@@ -91,6 +130,22 @@ function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
         /* typeParameters */ undefined,
         /* heritageClauses */ heritageClauses,
         /* members */ methods
+    );
+}
+
+function buildField(field: types.Field): ts.PropertyDeclaration {
+    const name = ts.createIdentifier(getIdentifier(field.name));
+    const type = buildType(field.type);
+
+    return ts.createProperty(
+        /* decorators */ undefined,
+        /* modifiers */ [ts.createToken(ts.SyntaxKind.PrivateKeyword)],
+        /* name */ name,
+        /* questionOrExclamationToken */ ts.createToken(
+            ts.SyntaxKind.QuestionToken
+        ),
+        /* type */ type,
+        /* initializer */ undefined
     );
 }
 
@@ -149,36 +204,25 @@ function buildPrimType(type: types.PrimType): ts.TypeNode {
 }
 
 function buildBlock(block: types.Block): ts.Block {
-    const statements = block.statements.map(buildStatement);
-
-    return ts.createBlock(/* statements */ statements, /* multiline */ true);
-}
-
-function buildStatement(statement: types.Statement): ts.Statement {
-    switch (statement.nodeType) {
-        case "ExpressionStatement":
-            return buildExpressionStatement(statement);
+    let statements: ts.Statement[] = [];
+    if (block.expression) {
+        statements = [
+            ts.createExpressionStatement(buildExpression(block.expression)),
+        ];
     }
-}
-
-function buildExpressionStatement(
-    expressionStatement: types.ExpressionStatement
-): ts.ExpressionStatement {
-    const expression = buildExpression(expressionStatement.expression);
-
-    return ts.createExpressionStatement(expression);
+    return ts.createBlock(/* statements */ statements, /* multiline */ true);
 }
 
 function buildExpression(expression: types.Expression): ts.Expression {
     switch (expression.nodeType) {
         case "VariableAccess":
             return buildVariableAccess(expression);
-        case "AssignmentExpression":
-            return buildAssignmentExpression(expression);
         case "FunctionCall":
             return buildFunctionCall(expression);
         case "StringConcat":
             return buildStringConcat(expression);
+        case "MethodCall":
+            return buildMethodCall(expression);
     }
 }
 
@@ -188,19 +232,6 @@ function buildVariableAccess(
     const identifier = getIdentifier(variableAccess.variable);
 
     return ts.createIdentifier(identifier);
-}
-
-function buildAssignmentExpression(
-    assignmentExpression: types.AssignmentExpression
-): ts.BinaryExpression {
-    const left = buildVariableAccess(assignmentExpression.left);
-    const right = buildExpression(assignmentExpression.right);
-
-    return ts.createBinary(
-        /* left */ left,
-        /* operator */ ts.SyntaxKind.EqualsToken,
-        /* right */ right
-    );
 }
 
 function buildFunctionCall(
@@ -256,6 +287,20 @@ function buildStringLiteral(
     stringLiteral: types.StringLiteral
 ): ts.StringLiteral {
     return ts.createStringLiteral(stringLiteral.nodeId);
+}
+
+function buildMethodCall(methodCall: types.MethodCall): ts.CallExpression {
+    const identifier = ts.createIdentifier(getIdentifier(methodCall.name));
+    const args = methodCall.arguments.map(buildExpression);
+    const thisExpression = ts.createPropertyAccess(
+        /* expression */ ts.createThis(),
+        /* name */ identifier
+    );
+    return ts.createCall(
+        /* expression */ thisExpression,
+        /* typeArguments */ undefined,
+        /* argumentsArray */ args
+    );
 }
 
 function getIdentifier(identifier: types.Identifier): string {
