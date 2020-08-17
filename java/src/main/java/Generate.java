@@ -1,4 +1,3 @@
-import com.google.gson.JsonArray;
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.parser.CompUtil;
@@ -29,6 +28,10 @@ public class Generate implements Callable<Integer> {
     @Option(names = {"--count"}, description = "Count solutions")
     private boolean count;
 
+    class SolRef {
+        public A4Solution solutionRef;
+    }
+
     private static void writeAllSolutions(A4Solution solution, OutputStreamWriter writer) throws IOException {
         int solutionsCount = 0;
         writer.write("[\n");
@@ -38,18 +41,23 @@ public class Generate implements Callable<Integer> {
             if (solutionsCount > 0) {
                 writer.write(",\n");
             }
-            System.out.println(String.format("Writing solution %d...", solutionsCount));
+            System.out.printf("Writing solution %d...%n", solutionsCount);
             writer.write(solutionJson.toString());
             solution = solution.next();
             solutionsCount += 1;
         }
         writer.write("\n]");
-        System.out.println(String.format("Total solutions: %d", solutionsCount));
+        System.out.printf("Total solutions: %d%n", solutionsCount);
     }
 
-    private static int countSolutions(A4Solution solution) {
+    private static int countSolutions(SolRef solutionRef) {
+        A4Solution solution = solutionRef.solutionRef;
+        solutionRef.solutionRef = null;
         int count = 0;
         while (solution.satisfiable()) {
+            if ((count % 1000) == 0) {
+                System.out.printf("Solution %d%n", count);
+            }
             count += 1;
             solution = solution.next();
         }
@@ -82,14 +90,17 @@ public class Generate implements Callable<Integer> {
         }
         var cmd = cmds.get();
         var options = new A4Options();
+        options.solver = A4Options.SatSolver.MiniSatJNI;
 
-        System.out.println(String.format("Running command '%s'", cmd.label));
-        var solution = TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options);
+        System.out.printf("Running command '%s'%n", cmd.label);
         if (this.count) {
             System.out.println("Counting solutions...");
-            System.out.println(String.format("Total solutions: %d", countSolutions(solution)));
+            var solutionRef = new SolRef();
+            solutionRef.solutionRef = TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options);
+            System.out.printf("Total solutions: %d%n", countSolutions(solutionRef));
         }
         else {
+            var solution = TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options);
             try (OutputStreamWriter writer =
                          new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(this.outputPath)),
                                  StandardCharsets.UTF_8)) {
