@@ -13,7 +13,6 @@ fact IdentifierParent {
 	(all i: FieldIdentifier | some f: Field | i = f.name)
 }
 
-
 -- ===== Program ====
 one sig Program {
 	declarations: set Declaration
@@ -146,15 +145,6 @@ fact ExpressionParent {
 	}
 }
 
-// sig AssignmentExpression extends Expression {
-// 	left: one VariableAccess,
-// 	right: one Expression
-// }
-
-// fact AssignmentExpressionNoCycle {
-// 	all a: AssignmentExpression | a not in a.^right
-// }
-
 sig VariableAccess extends Expression {
 	variable: one (ParameterIdentifier + FieldIdentifier)
 }
@@ -163,14 +153,15 @@ sig VariableAccess extends Expression {
 // That is, there should be a function/method parameter or class field with that same identifier.
 fact ValidVariableAccess {
 	all f: FunctionDecl, v: VariableAccess {
-		-- Variable is parameter.
-		(v in f.body.expression.*(FunctionCall <: arguments + concat)) implies (v.variable in f.parameters.name)
+		-- Variable is an existing parameter.
+		(v in f.body.expression.*(FunctionCall <: arguments + MethodCall <: arguments + concat)) implies
+			(v.variable in f.parameters.name)
 	}
 	all m: MethodDecl, v: VariableAccess {
-		-- Variable is...
-		(v in m.body.expression.*(MethodCall <: arguments + concat)) implies (
-			(v.variable in m.parameters.name) or -- Method parameter, or
-			(v.variable in m.~methods.fields.name) or -- Class field, or
+		-- Variable is an existing...
+		(v in m.body.expression.*(MethodCall <: arguments + FunctionCall <: arguments + concat)) implies (
+			(v.variable in m.parameters.name) or -- Method parameter
+			(v.variable in m.~methods.fields.name) or -- Class field
 			(v.variable in m.~methods.^extend.fields.name and no v.variable.~name.visibility)) -- Non-private parent class field.
 	}
 }
@@ -195,13 +186,14 @@ sig MethodCall extends Expression {
 
 fact MethodCalledExists {
 	all mc: MethodCall | some m: MethodDecl {
-		mc.name = m.name
+		mc.name = m.name -- The method name exists.
 		all m1: MethodDecl {
-			mc in m1.body.expression implies {
+			mc in m1.body.expression implies { -- If method m is called inside a method declaration m1, then m was declared in m1's class' inheritance path.
 				m in m1.~methods.*extend.methods
 			}
 		}
 	}
+	all c: MethodCall | c.~expression.~(MethodDecl <: body + FunctionDecl <: body) in MethodDecl -- Method calls can only appear in method bodies, not functions.
 }
 
 fact MethodCallArity {
@@ -244,11 +236,14 @@ run default for 2
 pred small {}
 run small for 1
 
-// TODO: Add info about which refactorings correspond to which preds
-pred ConvertFunction {
+/*
+	Refactoring: Convert parameters to destructured object.
+	Condition: there should be a function or method with at least 2 parameters.
+*/
+pred ConvertParamsToDestructuredObject {
 	(some f: FunctionDecl | #f.parameters > 1) or (some m: MethodDecl | #m.parameters > 1)
 }
-run ConvertFunction for 0 but
+run ConvertParamsToDestructuredObject for 0 but
 	// 2 Declaration, -- TODO: should we have this?
 	2 FunctionDecl,
 	2 FunctionIdentifier,
@@ -262,11 +257,13 @@ run ConvertFunction for 0 but
 	2 MethodDecl,
 	2 MethodIdentifier
 
-
+/*
+	Refactoring: Convert to template string.
+	Condition: there should be a string concatenation expression.
+*/
 pred ConvertToTemplateString {
 	one StringConcat
 }
-// run ConvertToTemplateString for 1 but 2 Expression, 2 StringLiteral
 run ConvertToTemplateString for 0 but
 	1 Declaration,
 	2 Expression,
@@ -283,7 +280,10 @@ run ConvertToTemplateString for 0 but
 	1 MethodIdentifier,
 	1 Block
 
-
+/*
+	Refactoring: Generate 'get' and 'set' accessors.
+	Condition: there should be a class with at least one field.
+*/
 pred GenerateGetAndSetAccessor {
 	some c: ClassDecl | #c.fields > 0
 }
@@ -302,6 +302,10 @@ run GenerateGetAndSetAccessor for 0 but
 	0 StringConcat,
 	2 Block
 
+/*
+	Refactoring: Extract Symbol.
+	Condition: there should be a method or function call, or a string literal.
+*/
 pred ExtractSymbol {
 	some (FunctionCall + MethodCall) or some StringLiteral
 }
@@ -324,6 +328,10 @@ run ExtractSymbol for 0 but
 	1 ParameterIdentifier,
 	0 VariableAccess
 
+/*
+	Refactoring: Move to a new file.
+	Condition: there should be a top-level declaration (function or class declaration).
+*/
 pred MoveToNewFile {
 	some (FunctionDecl + ClassDecl)
 }
