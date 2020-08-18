@@ -13,12 +13,14 @@ export function filterErrorResults(results: Result[]): Result[] {
 }
 
 export function getErrors(results: Result[]): CompilerError[] {
-    return _.flatMap(results, result => result.program.errors);
+    return _.flatMap(results, (result) => result.program.errors);
 }
 
-export function getErrorsByCode(results: Result[]): _.Dictionary<CompilerError[]> {
+export function getErrorsByCode(
+    results: Result[]
+): _.Dictionary<CompilerError[]> {
     const errors = getErrors(results);
-    return _.groupBy(errors, error => error.code);
+    return _.groupBy(errors, (error) => error.code);
 }
 
 function prettyPrintError(result: Result) {

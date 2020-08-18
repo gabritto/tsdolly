@@ -364,7 +364,8 @@ function getRefactorInfo(
         _.isEqual(a.editInfo, b.editInfo)
     );
 
-    if (applyRefactoring) { // TODO: should we apply refactorings even when program has error?
+    if (applyRefactoring) {
+        // TODO: should we apply refactorings even when program has error?
         for (const refactorInfo of refactorsInfo) {
             refactorInfo.resultingProgram = getRefactorResult(
                 project,

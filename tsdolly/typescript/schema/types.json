@@ -1,592 +1,469 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "Block": {
-      "additionalProperties": false,
-      "properties": {
-        "expression": {
-          "$ref": "#/definitions/Expression"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "Block"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "ClassDecl": {
-      "additionalProperties": false,
-      "properties": {
-        "extend": {
-          "$ref": "#/definitions/ClassDecl"
-        },
-        "fields": {
-          "items": {
-            "$ref": "#/definitions/Field"
-          },
-          "type": "array"
-        },
-        "methods": {
-          "items": {
-            "$ref": "#/definitions/MethodDecl"
-          },
-          "type": "array"
-        },
-        "name": {
-          "$ref": "#/definitions/ClassIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "ClassDecl"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "fields",
-        "methods",
-        "name",
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "ClassIdentifier": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "ClassIdentifier"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Declaration": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FunctionDecl"
-        },
-        {
-          "$ref": "#/definitions/ClassDecl"
-        }
-      ]
-    },
-    "Expression": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/VariableAccess"
-        },
-        {
-          "$ref": "#/definitions/FunctionCall"
-        },
-        {
-          "$ref": "#/definitions/StringConcat"
-        },
-        {
-          "$ref": "#/definitions/MethodCall"
-        }
-      ]
-    },
-    "Field": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "$ref": "#/definitions/FieldIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "Field"
-          ],
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/Type"
-        },
-        "visibility": {
-          "$ref": "#/definitions/Private"
-        }
-      },
-      "required": [
-        "name",
-        "nodeId",
-        "nodeType",
-        "type"
-      ],
-      "type": "object"
-    },
-    "FieldIdentifier": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "FieldIdentifier"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "FunctionCall": {
-      "additionalProperties": false,
-      "properties": {
-        "arguments": {
-          "items": {
-            "$ref": "#/definitions/VariableAccess"
-          },
-          "type": "array"
-        },
-        "name": {
-          "$ref": "#/definitions/FunctionIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "FunctionCall"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "arguments",
-        "name",
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "FunctionDecl": {
-      "additionalProperties": false,
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/Block"
-        },
-        "name": {
-          "$ref": "#/definitions/FunctionIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "FunctionDecl"
-          ],
-          "type": "string"
-        },
-        "parameters": {
-          "items": {
-            "$ref": "#/definitions/ParameterDecl"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "body",
-        "name",
-        "nodeId",
-        "nodeType",
-        "parameters"
-      ],
-      "type": "object"
-    },
-    "FunctionIdentifier": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "FunctionIdentifier"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Identifier": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FunctionIdentifier"
-        },
-        {
-          "$ref": "#/definitions/ParameterIdentifier"
-        },
-        {
-          "$ref": "#/definitions/ClassIdentifier"
-        },
-        {
-          "$ref": "#/definitions/MethodIdentifier"
-        },
-        {
-          "$ref": "#/definitions/FieldIdentifier"
-        }
-      ]
-    },
-    "MethodCall": {
-      "additionalProperties": false,
-      "properties": {
-        "arguments": {
-          "items": {
-            "$ref": "#/definitions/VariableAccess"
-          },
-          "type": "array"
-        },
-        "name": {
-          "$ref": "#/definitions/MethodIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "MethodCall"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "arguments",
-        "name",
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "MethodDecl": {
-      "additionalProperties": false,
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/Block"
-        },
-        "name": {
-          "$ref": "#/definitions/MethodIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "MethodDecl"
-          ],
-          "type": "string"
-        },
-        "parameters": {
-          "items": {
-            "$ref": "#/definitions/ParameterDecl"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "body",
-        "name",
-        "nodeId",
-        "nodeType",
-        "parameters"
-      ],
-      "type": "object"
-    },
-    "MethodIdentifier": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "MethodIdentifier"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Node": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "ParameterDecl": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "$ref": "#/definitions/ParameterIdentifier"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "ParameterDecl"
-          ],
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/Type"
-        }
-      },
-      "required": [
-        "name",
-        "nodeId",
-        "nodeType",
-        "type"
-      ],
-      "type": "object"
-    },
-    "ParameterIdentifier": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "ParameterIdentifier"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "PrimType": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TNumber"
-        },
-        {
-          "$ref": "#/definitions/TString"
-        }
-      ]
-    },
-    "Private": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "Private"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Program": {
-      "additionalProperties": false,
-      "properties": {
-        "declarations": {
-          "items": {
-            "$ref": "#/definitions/Declaration"
-          },
-          "type": "array"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "Program"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "declarations",
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Solutions": {
-      "items": {
-        "$ref": "#/definitions/Program"
-      },
-      "type": "array"
-    },
-    "StringConcat": {
-      "additionalProperties": false,
-      "properties": {
-        "concat": {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringLiteral"
-              },
-              {
-                "$ref": "#/definitions/VariableAccess"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "StringConcat"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "concat",
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "StringLiteral": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "StringLiteral"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "TNumber": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "TNumber"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "TString": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "TString"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeId",
-        "nodeType"
-      ],
-      "type": "object"
-    },
-    "Type": {
-      "$ref": "#/definitions/PrimType"
-    },
-    "VariableAccess": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeId": {
-          "type": "string"
-        },
-        "nodeType": {
-          "enum": [
-            "VariableAccess"
-          ],
-          "type": "string"
-        },
-        "variable": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/ParameterIdentifier"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "Block": {
+            "additionalProperties": false,
+            "properties": {
+                "expression": {
+                    "$ref": "#/definitions/Expression"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["Block"],
+                    "type": "string"
+                }
             },
-            {
-              "$ref": "#/definitions/FieldIdentifier"
-            }
-          ]
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "ClassDecl": {
+            "additionalProperties": false,
+            "properties": {
+                "extend": {
+                    "$ref": "#/definitions/ClassDecl"
+                },
+                "fields": {
+                    "items": {
+                        "$ref": "#/definitions/Field"
+                    },
+                    "type": "array"
+                },
+                "methods": {
+                    "items": {
+                        "$ref": "#/definitions/MethodDecl"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "$ref": "#/definitions/ClassIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["ClassDecl"],
+                    "type": "string"
+                }
+            },
+            "required": ["fields", "methods", "name", "nodeId", "nodeType"],
+            "type": "object"
+        },
+        "ClassIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["ClassIdentifier"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Declaration": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/FunctionDecl"
+                },
+                {
+                    "$ref": "#/definitions/ClassDecl"
+                }
+            ]
+        },
+        "Expression": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/VariableAccess"
+                },
+                {
+                    "$ref": "#/definitions/FunctionCall"
+                },
+                {
+                    "$ref": "#/definitions/StringConcat"
+                },
+                {
+                    "$ref": "#/definitions/MethodCall"
+                }
+            ]
+        },
+        "Field": {
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/FieldIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["Field"],
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/Type"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/Private"
+                }
+            },
+            "required": ["name", "nodeId", "nodeType", "type"],
+            "type": "object"
+        },
+        "FieldIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["FieldIdentifier"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "FunctionCall": {
+            "additionalProperties": false,
+            "properties": {
+                "arguments": {
+                    "items": {
+                        "$ref": "#/definitions/VariableAccess"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "$ref": "#/definitions/FunctionIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["FunctionCall"],
+                    "type": "string"
+                }
+            },
+            "required": ["arguments", "name", "nodeId", "nodeType"],
+            "type": "object"
+        },
+        "FunctionDecl": {
+            "additionalProperties": false,
+            "properties": {
+                "body": {
+                    "$ref": "#/definitions/Block"
+                },
+                "name": {
+                    "$ref": "#/definitions/FunctionIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["FunctionDecl"],
+                    "type": "string"
+                },
+                "parameters": {
+                    "items": {
+                        "$ref": "#/definitions/ParameterDecl"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["body", "name", "nodeId", "nodeType", "parameters"],
+            "type": "object"
+        },
+        "FunctionIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["FunctionIdentifier"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Identifier": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/FunctionIdentifier"
+                },
+                {
+                    "$ref": "#/definitions/ParameterIdentifier"
+                },
+                {
+                    "$ref": "#/definitions/ClassIdentifier"
+                },
+                {
+                    "$ref": "#/definitions/MethodIdentifier"
+                },
+                {
+                    "$ref": "#/definitions/FieldIdentifier"
+                }
+            ]
+        },
+        "MethodCall": {
+            "additionalProperties": false,
+            "properties": {
+                "arguments": {
+                    "items": {
+                        "$ref": "#/definitions/VariableAccess"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "$ref": "#/definitions/MethodIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["MethodCall"],
+                    "type": "string"
+                }
+            },
+            "required": ["arguments", "name", "nodeId", "nodeType"],
+            "type": "object"
+        },
+        "MethodDecl": {
+            "additionalProperties": false,
+            "properties": {
+                "body": {
+                    "$ref": "#/definitions/Block"
+                },
+                "name": {
+                    "$ref": "#/definitions/MethodIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["MethodDecl"],
+                    "type": "string"
+                },
+                "parameters": {
+                    "items": {
+                        "$ref": "#/definitions/ParameterDecl"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["body", "name", "nodeId", "nodeType", "parameters"],
+            "type": "object"
+        },
+        "MethodIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["MethodIdentifier"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Node": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "ParameterDecl": {
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/ParameterIdentifier"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["ParameterDecl"],
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/Type"
+                }
+            },
+            "required": ["name", "nodeId", "nodeType", "type"],
+            "type": "object"
+        },
+        "ParameterIdentifier": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["ParameterIdentifier"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "PrimType": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/TNumber"
+                },
+                {
+                    "$ref": "#/definitions/TString"
+                }
+            ]
+        },
+        "Private": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["Private"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Program": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "$ref": "#/definitions/Declaration"
+                    },
+                    "type": "array"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["Program"],
+                    "type": "string"
+                }
+            },
+            "required": ["declarations", "nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Solutions": {
+            "items": {
+                "$ref": "#/definitions/Program"
+            },
+            "type": "array"
+        },
+        "StringConcat": {
+            "additionalProperties": false,
+            "properties": {
+                "concat": {
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/StringLiteral"
+                            },
+                            {
+                                "$ref": "#/definitions/VariableAccess"
+                            }
+                        ]
+                    },
+                    "type": "array"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["StringConcat"],
+                    "type": "string"
+                }
+            },
+            "required": ["concat", "nodeId", "nodeType"],
+            "type": "object"
+        },
+        "StringLiteral": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["StringLiteral"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "TNumber": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["TNumber"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "TString": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["TString"],
+                    "type": "string"
+                }
+            },
+            "required": ["nodeId", "nodeType"],
+            "type": "object"
+        },
+        "Type": {
+            "$ref": "#/definitions/PrimType"
+        },
+        "VariableAccess": {
+            "additionalProperties": false,
+            "properties": {
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeType": {
+                    "enum": ["VariableAccess"],
+                    "type": "string"
+                },
+                "variable": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ParameterIdentifier"
+                        },
+                        {
+                            "$ref": "#/definitions/FieldIdentifier"
+                        }
+                    ]
+                }
+            },
+            "required": ["nodeId", "nodeType", "variable"],
+            "type": "object"
         }
-      },
-      "required": [
-        "nodeId",
-        "nodeType",
-        "variable"
-      ],
-      "type": "object"
     }
-  }
 }

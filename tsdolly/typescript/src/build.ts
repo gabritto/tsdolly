@@ -232,8 +232,15 @@ function buildVariableAccess(
     variableAccess: types.VariableAccess
 ): ts.Expression {
     const identifier = getIdentifier(variableAccess.variable);
-
-    return ts.createIdentifier(identifier);
+    switch (variableAccess.variable.nodeType) {
+        case "FieldIdentifier":
+            return ts.createPropertyAccess(
+                /* expression */ ts.createThis(),
+                /* name */ ts.createIdentifier(identifier)
+            );
+        case "ParameterIdentifier":
+            return ts.createIdentifier(identifier);
+    }
 }
 
 function buildFunctionCall(

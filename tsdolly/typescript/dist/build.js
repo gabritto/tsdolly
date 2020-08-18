@@ -181,7 +181,14 @@ function buildExpression(expression) {
 }
 function buildVariableAccess(variableAccess) {
     var identifier = getIdentifier(variableAccess.variable);
-    return ts_morph_1.ts.createIdentifier(identifier);
+    switch (variableAccess.variable.nodeType) {
+        case "FieldIdentifier":
+            return ts_morph_1.ts.createPropertyAccess(
+            /* expression */ ts_morph_1.ts.createThis(), 
+            /* name */ ts_morph_1.ts.createIdentifier(identifier));
+        case "ParameterIdentifier":
+            return ts_morph_1.ts.createIdentifier(identifier);
+    }
 }
 function buildFunctionCall(functionCall) {
     var identifier = ts_morph_1.ts.createIdentifier(getIdentifier(functionCall.name));
