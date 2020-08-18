@@ -41,20 +41,20 @@ function main() {
         demandOption: true
     })
         .option("refactoring", {
-        describe: "List of refactorings to be analyzed",
+        describe: "Refactoring to be analyzed",
         type: "string",
         choices: Object.values(Refactoring),
         demandOption: true
     })
         .option("applyRefactoring", {
-        describe: "Whether we should apply the refactorings available",
+        describe: "Whether we should apply available refactorings",
         type: "boolean",
-        "default": false
+        "default": true
     })
         .option("result", {
         describe: "Path to file where results should be saved",
         type: "string",
-        "default": path.join(ROOT_DIR, "..", "logs", "results.json")
+        demandOption: true
     })
         .option("first", {
         describe: "Consider only the first n solutions",
@@ -155,7 +155,6 @@ function analyzePrograms(programs, opts) {
 }
 function analyzeProgram(programText, index, refactoring, applyRefactoring, refactoringPred) {
     console.log("Starting to analyze program " + index);
-    // const filePath = `../output/programs/program_${index}.ts`;
     var filePath = "program.ts";
     var project = build_1.buildProject(programText, filePath);
     var sourceFile = project.getSourceFileOrThrow(filePath);
@@ -219,7 +218,7 @@ var REFACTOR_TO_PRED = new Map([
     [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
 function isStringConcat(node) {
-    return ts_morph_1.ts.isBinaryExpression(node); // TODO: can we add more checks to this?
+    return ts_morph_1.ts.isBinaryExpression(node); // TODO: should we add more checks to this?
 }
 function isParameter(node) {
     return ts_morph_1.ts.isParameter(node);
@@ -239,7 +238,7 @@ function getRefactorInfo(project, program, file, applyRefactoring, enabledRefact
     refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
         return _.isEqual(a.editInfo, b.editInfo);
     });
-    if (applyRefactoring) {
+    if (applyRefactoring) { // TODO: should we apply refactorings even when program has error?
         for (var _i = 0, refactorsInfo_1 = refactorsInfo; _i < refactorsInfo_1.length; _i++) {
             var refactorInfo = refactorsInfo_1[_i];
             refactorInfo.resultingProgram = getRefactorResult(project, refactorInfo);

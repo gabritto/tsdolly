@@ -106,7 +106,7 @@ export type Expression =
 
 export interface VariableAccess extends Node {
     nodeType: "VariableAccess";
-    variable: ParameterIdentifier;
+    variable: ParameterIdentifier | FieldIdentifier;
 }
 
 export interface FunctionCall extends Node {

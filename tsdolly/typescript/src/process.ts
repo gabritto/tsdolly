@@ -45,20 +45,20 @@ function main(): void {
             demandOption: true,
         })
         .option("refactoring", {
-            describe: "List of refactorings to be analyzed",
+            describe: "Refactoring to be analyzed",
             type: "string",
             choices: Object.values(Refactoring),
             demandOption: true,
         })
         .option("applyRefactoring", {
-            describe: "Whether we should apply the refactorings available",
+            describe: "Whether we should apply available refactorings",
             type: "boolean",
-            default: false,
+            default: true,
         })
         .option("result", {
             describe: "Path to file where results should be saved",
             type: "string",
-            demandOption: true;
+            demandOption: true,
         })
         .option("first", {
             describe: "Consider only the first n solutions",
@@ -234,7 +234,6 @@ function analyzeProgram(
     refactoringPred: NodePredicate
 ): Result {
     console.log(`Starting to analyze program ${index}`);
-    // const filePath = `../output/programs/program_${index}.ts`;
     const filePath = "program.ts";
     const project = buildProject(programText, filePath);
     const sourceFile = project.getSourceFileOrThrow(filePath);
@@ -332,7 +331,7 @@ const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
 ]);
 
 function isStringConcat(node: ts.Node) {
-    return ts.isBinaryExpression(node); // TODO: can we add more checks to this?
+    return ts.isBinaryExpression(node); // TODO: should we add more checks to this?
 }
 
 function isParameter(node: ts.Node) {
@@ -365,7 +364,7 @@ function getRefactorInfo(
         _.isEqual(a.editInfo, b.editInfo)
     );
 
-    if (applyRefactoring) {
+    if (applyRefactoring) { // TODO: should we apply refactorings even when program has error?
         for (const refactorInfo of refactorsInfo) {
             refactorInfo.resultingProgram = getRefactorResult(
                 project,

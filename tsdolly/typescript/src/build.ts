@@ -131,7 +131,7 @@ function buildClassDecl(classDecl: types.ClassDecl): ts.ClassDeclaration {
         /* name */ name,
         /* typeParameters */ undefined,
         /* heritageClauses */ heritageClauses,
-        /* members */ methods
+        /* members */ [...fields, ...methods]
     );
 }
 

@@ -1,13 +1,24 @@
 import fs = require("fs");
-import { Result } from "./process";
+import _ = require("lodash");
 
-function inspectResults(path: string): Result[] {
+import { Result, CompilerError } from "./process";
+
+export function getResults(path: string): Result[] {
     const results = JSON.parse(fs.readFileSync(path, { encoding: "utf8" }));
     return results as Result[];
 }
 
-function getErrorResults(results: Result[]): Result[] {
+export function filterErrorResults(results: Result[]): Result[] {
     return results.filter((res) => res.program.hasError);
+}
+
+export function getErrors(results: Result[]): CompilerError[] {
+    return _.flatMap(results, result => result.program.errors);
+}
+
+export function getErrorsByCode(results: Result[]): _.Dictionary<CompilerError[]> {
+    const errors = getErrors(results);
+    return _.groupBy(errors, error => error.code);
 }
 
 function prettyPrintError(result: Result) {
