@@ -28,6 +28,15 @@ public class Generate implements Callable<Integer> {
     @Option(names = {"--count"}, description = "Count solutions")
     private boolean count;
 
+    @Option(names = {"--solver"}, description = "SAT solver to be used in Alloy API. Valid values: " +
+            "${COMPLETION-CANDIDATES}", defaultValue = "SAT4J")
+    private Solver solver;
+
+    private enum Solver {
+        MiniSat,
+        SAT4J
+    }
+
     static class SolutionWrapper {
         private A4Solution solution;
         public A4Solution getSolution() throws Exception {
@@ -107,7 +116,15 @@ public class Generate implements Callable<Integer> {
         }
         var cmd = cmds.get();
         var options = new A4Options();
-        options.solver = A4Options.SatSolver.MiniSatJNI;
+        options.solver = null;
+        switch (this.solver) {
+            case SAT4J:
+                options.solver = A4Options.SatSolver.SAT4J;
+                break;
+            case MiniSat:
+                options.solver = A4Options.SatSolver.MiniSatJNI;
+                break;
+        }
 
         System.out.printf("Running command '%s'%n", cmd.label);
         var solutionWrapper = new SolutionWrapper(TranslateAlloyToKodkod.execute_command(reporter, sigs, cmd, options));

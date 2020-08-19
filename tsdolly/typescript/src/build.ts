@@ -139,9 +139,14 @@ function buildField(field: types.Field): ts.PropertyDeclaration {
     const name = ts.createIdentifier(getIdentifier(field.name));
     const type = buildType(field.type);
 
+    const modifiers = [];
+    if (field.visibility) {
+        modifiers.push(ts.createToken(ts.SyntaxKind.PrivateKeyword));
+    }
+
     return ts.createProperty(
         /* decorators */ undefined,
-        /* modifiers */ [ts.createToken(ts.SyntaxKind.PrivateKeyword)],
+        /* modifiers */ modifiers,
         /* name */ name,
         /* questionOrExclamationToken */ ts.createToken(
             ts.SyntaxKind.QuestionToken

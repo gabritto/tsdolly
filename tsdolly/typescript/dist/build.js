@@ -108,9 +108,13 @@ function buildClassDecl(classDecl) {
 function buildField(field) {
     var name = ts_morph_1.ts.createIdentifier(getIdentifier(field.name));
     var type = buildType(field.type);
+    var modifiers = [];
+    if (field.visibility) {
+        modifiers.push(ts_morph_1.ts.createToken(ts_morph_1.ts.SyntaxKind.PrivateKeyword));
+    }
     return ts_morph_1.ts.createProperty(
     /* decorators */ undefined, 
-    /* modifiers */ [ts_morph_1.ts.createToken(ts_morph_1.ts.SyntaxKind.PrivateKeyword)], 
+    /* modifiers */ modifiers, 
     /* name */ name, 
     /* questionOrExclamationToken */ ts_morph_1.ts.createToken(ts_morph_1.ts.SyntaxKind.QuestionToken), 
     /* type */ type, 

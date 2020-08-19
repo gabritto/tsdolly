@@ -13,50 +13,45 @@ var __assign = (this && this.__assign) || function () {
 exports.__esModule = true;
 var yargs = require("yargs");
 var process_1 = require("./process");
+var SOLVERS = ["SAT4J", "MiniSat"];
+var JAVA_OPTS = {
+    "command": {
+        describe: "Alloy command that should be run to generate solutions",
+        type: "string"
+    },
+    "model": {
+        describe: "Path to Alloy model file",
+        type: "string"
+    },
+    "output": {
+        describe: "Path of file where generated solutions should be saved",
+        type: "string"
+    },
+    "solver": {
+        describe: "SAT solver to be used in Alloy API",
+        type: "string",
+        choices: SOLVERS
+    },
+    "count": {
+        describe: "Count solutions instead of generating them",
+        type: "boolean"
+    }
+};
+var newProcessOpts = __assign(__assign({}, process_1.CLI_OPTIONS), { solution: null });
+var OPTS = __assign(__assign({}, JAVA_OPTS), newProcessOpts);
 function main() {
     var opts = yargs
         .usage("To do") // TODO: write usage
-        .option("solution", {
-        describe: "Path to file containing the Alloy metamodel solutions",
-        type: "string",
-        demandOption: true
-    })
-        .option("refactoring", {
-        describe: "List of refactorings to be analyzed",
-        type: "string",
-        choices: Object.values(process_1.Refactoring),
-        demandOption: true
-    })
-        .option("applyRefactoring", {
-        describe: "Whether we should apply the refactorings available",
-        type: "boolean",
-        "default": false
-    })
-        .option("result", {
-        describe: "Path to file where results should be saved",
-        type: "string",
-        "default": "logs/results.json"
-    })
-        .option("first", {
-        describe: "Consider only the first n solutions",
-        type: "number",
-        conflicts: "skip"
-    })
-        .option("skip", {
-        describe: "Percentage of the solutions that will be sampled (using random sampling)",
-        type: "number",
-        conflicts: "first"
-    })
-        // Java options
-        .option("command", {
-        describe: "Alloy command to run",
-        type: "string"
-    })
+        .option(OPTS)
         .epilogue("TODO: epilogue").argv;
     var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring });
     // TODO: call java
     // TODO: pass "../../typescript.als" as model (using path.join?)
-    process_1.tsdolly(cliOpts);
+    // tsdolly(cliOpts);
+}
+function generateSolutions(opts) {
+    // cp.execFileSync();
+    return "";
 }
 if (!module.parent) {
     main();

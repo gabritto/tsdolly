@@ -53,7 +53,7 @@ sig Field {
 -- All fields will be considered optional to avoid non-initialization errors.
 
 fact FieldParent {
-	all f: Field | some c: ClassDecl | f in c.fields
+	all f: Field | one c: ClassDecl | f in c.fields
 }
 
 -- Field names are unique given a class.
@@ -63,6 +63,11 @@ fact FieldParent {
 fact FieldUniqueName {
 	all c: ClassDecl | all disj f1, f2: c.*extend.fields | f1.name != f2.name
 }
+
+assert FieldNoOverride {
+	all disj c1, c2: ClassDecl | c1 in c2.*extend implies disj[c1.fields.name, c2.fields.name]
+}
+check FieldNoOverride for 5
 
 one sig Private {}
 
@@ -90,14 +95,6 @@ fact MethodDeclOverriding {
 		#m1.parameters = #m1.parameters
 	}
 }
-
-pred methodName {
-	some c1: ClassDecl, c2: c1.^extend | some m: MethodIdentifier {
-		m in c1.methods.name and m in c2.methods.name
-	}
-}
-run methodName for 2
-
 
 // Parameters
 sig ParameterDecl {
@@ -294,13 +291,14 @@ run GenerateGetAndSetAccessor for 0 but
 	2 FieldIdentifier,
 	2 ClassDecl,
 	2 ClassIdentifier,
-	2 MethodDecl,
-	2 MethodIdentifier,
-	2 ParameterDecl,
-	2 ParameterIdentifier,
+	1 MethodDecl,
+	1 MethodIdentifier,
+	1 ParameterDecl,
+	1 ParameterIdentifier,
 	2 Expression,
 	0 StringConcat,
-	2 Block
+	1 Block,
+	0 FunctionDecl
 
 /*
 	Refactoring: Extract Symbol.

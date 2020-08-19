@@ -36,41 +36,45 @@ export interface CliOpts {
     first?: number;
 }
 
+export const CLI_OPTIONS = {
+    "solution": {
+        describe: "Path to file containing the Alloy metamodel solutions",
+        type: "string",
+        demandOption: true,
+    },
+    "refactoring": {
+        describe: "Refactoring to be analyzed",
+        type: "string",
+        choices: Object.values(Refactoring),
+        demandOption: true,
+    },
+    "applyRefactoring" : {
+        describe: "Whether we should apply available refactorings",
+        type: "boolean",
+        default: true,
+    },
+    "result": {
+        describe: "Path to file where results should be saved",
+        type: "string",
+        demandOption: true,
+    },
+    "first": {
+        describe: "Consider only the first n solutions",
+        type: "number",
+        conflicts: "skip",
+    },
+    "skip": {
+        describe:
+            "If specified, only one out of every n solutions will be analyzed",
+        type: "number",
+        conflicts: "first",
+    }
+} as const;
+
 function main(): void {
     const opts = yargs
         .usage("To do") // TODO: write usage
-        .option("solution", {
-            describe: "Path to file containing the Alloy metamodel solutions",
-            type: "string",
-            demandOption: true,
-        })
-        .option("refactoring", {
-            describe: "Refactoring to be analyzed",
-            type: "string",
-            choices: Object.values(Refactoring),
-            demandOption: true,
-        })
-        .option("applyRefactoring", {
-            describe: "Whether we should apply available refactorings",
-            type: "boolean",
-            default: true,
-        })
-        .option("result", {
-            describe: "Path to file where results should be saved",
-            type: "string",
-            demandOption: true,
-        })
-        .option("first", {
-            describe: "Consider only the first n solutions",
-            type: "number",
-            conflicts: "skip",
-        })
-        .option("skip", {
-            describe:
-                "If specified, only one out of every n solutions will be analyzed",
-            type: "number",
-            conflicts: "first",
-        })
+        .option(CLI_OPTIONS)
         .epilogue("TODO: epilogue").argv;
 
     const cliOpts = {
@@ -161,10 +165,13 @@ export interface File {
 function printResults(results: Result[], opts: CliOpts): void {
     const aggregate = aggregateResults(results);
 
-    console.log(`Total programs: ${aggregate.total}
+    console.log(`
+Total programs: ${aggregate.total}
 Total programs that compile: ${aggregate.compiling}
-Compiling rate: ${aggregate.compileRate * 100}%`);
-    console.log(`Average of available refactors: ${aggregate.refactorAvg}`);
+Compiling rate: ${aggregate.compileRate * 100}%
+Programs that can be refactored (refactorable): ${aggregate.refactorable}
+Refactorable rate: ${aggregate.refactorableRate * 100}%
+`);
 
     const jsonResults = JSON.stringify(
         results,
@@ -185,18 +192,19 @@ export interface AggregateResult {
     total: number;
     compiling: number;
     compileRate: number;
-    refactorAvg?: number;
+    refactorable: number;
+    refactorableRate: number;
 }
 
 function aggregateResults(results: Result[]): AggregateResult {
     let compiling = 0;
-    let totalRefactors = 0;
+    let refactorable = 0;
     for (const result of results) {
         if (!result.program.hasError) {
             compiling += 1;
         }
         if (result.refactors.length > 0) {
-            totalRefactors += result.refactors.length;
+            refactorable += 1;
         }
     }
 
@@ -204,7 +212,8 @@ function aggregateResults(results: Result[]): AggregateResult {
         total: results.length,
         compiling,
         compileRate: compiling / results.length,
-        refactorAvg: totalRefactors / results.length,
+        refactorable,
+        refactorableRate: refactorable / results.length
     };
 }
 
@@ -436,9 +445,8 @@ function getEditInfo(
         /* preferences */ undefined
     );
     assert(
-        editInfo?.commands === undefined &&
-            editInfo?.renameFilename === undefined,
-        "We cannot deal with refactorings which include commands or file renames."
+        editInfo?.commands === undefined,
+        "We cannot deal with refactorings which include commands."
     );
     return editInfo;
 }

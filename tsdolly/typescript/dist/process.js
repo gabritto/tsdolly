@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 exports.__esModule = true;
-exports.tsdolly = exports.Refactoring = void 0;
+exports.tsdolly = exports.CLI_OPTIONS = exports.Refactoring = void 0;
 var yargs = require("yargs");
 var fs = require("fs");
 var Ajv = require("ajv");
@@ -32,40 +32,43 @@ var Refactoring;
     Refactoring["ExtractSymbol"] = "Extract Symbol";
     Refactoring["MoveToNewFile"] = "Move to a new file";
 })(Refactoring = exports.Refactoring || (exports.Refactoring = {}));
-function main() {
-    var opts = yargs
-        .usage("To do") // TODO: write usage
-        .option("solution", {
+exports.CLI_OPTIONS = {
+    "solution": {
         describe: "Path to file containing the Alloy metamodel solutions",
         type: "string",
         demandOption: true
-    })
-        .option("refactoring", {
+    },
+    "refactoring": {
         describe: "Refactoring to be analyzed",
         type: "string",
         choices: Object.values(Refactoring),
         demandOption: true
-    })
-        .option("applyRefactoring", {
+    },
+    "applyRefactoring": {
         describe: "Whether we should apply available refactorings",
         type: "boolean",
         "default": true
-    })
-        .option("result", {
+    },
+    "result": {
         describe: "Path to file where results should be saved",
         type: "string",
         demandOption: true
-    })
-        .option("first", {
+    },
+    "first": {
         describe: "Consider only the first n solutions",
         type: "number",
         conflicts: "skip"
-    })
-        .option("skip", {
+    },
+    "skip": {
         describe: "If specified, only one out of every n solutions will be analyzed",
         type: "number",
         conflicts: "first"
-    })
+    }
+};
+function main() {
+    var opts = yargs
+        .usage("To do") // TODO: write usage
+        .option(exports.CLI_OPTIONS)
         .epilogue("TODO: epilogue").argv;
     var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring });
     tsdolly(cliOpts);
@@ -112,8 +115,7 @@ function sample(solutions, skip) {
 }
 function printResults(results, opts) {
     var aggregate = aggregateResults(results);
-    console.log("Total programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%");
-    console.log("Average of available refactors: " + aggregate.refactorAvg);
+    console.log("\nTotal programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%\nPrograms that can be refactored (refactorable): " + aggregate.refactorable + "\nRefactorable rate: " + aggregate.refactorableRate * 100 + "%\n");
     var jsonResults = JSON.stringify(results, 
     /* replacer */ undefined, 
     /* space */ 4);
@@ -127,21 +129,22 @@ function printResults(results, opts) {
 }
 function aggregateResults(results) {
     var compiling = 0;
-    var totalRefactors = 0;
+    var refactorable = 0;
     for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
         var result = results_1[_i];
         if (!result.program.hasError) {
             compiling += 1;
         }
         if (result.refactors.length > 0) {
-            totalRefactors += result.refactors.length;
+            refactorable += 1;
         }
     }
     return {
         total: results.length,
         compiling: compiling,
         compileRate: compiling / results.length,
-        refactorAvg: totalRefactors / results.length
+        refactorable: refactorable,
+        refactorableRate: refactorable / results.length
     };
 }
 function analyzePrograms(programs, opts) {
@@ -238,7 +241,8 @@ function getRefactorInfo(project, program, file, applyRefactoring, enabledRefact
     refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
         return _.isEqual(a.editInfo, b.editInfo);
     });
-    if (applyRefactoring) { // TODO: should we apply refactorings even when program has error?
+    if (applyRefactoring) {
+        // TODO: should we apply refactorings even when program has error?
         for (var _i = 0, refactorsInfo_1 = refactorsInfo; _i < refactorsInfo_1.length; _i++) {
             var refactorInfo = refactorsInfo_1[_i];
             refactorInfo.resultingProgram = getRefactorResult(project, refactorInfo);
@@ -279,8 +283,7 @@ function getEditInfo(project, node, refactorName, actionName) {
     var editInfo = languageService.getEditsForRefactor(node.getSourceFile().fileName, 
     /* formatOptions */ formatSettings, node, refactorName, actionName, 
     /* preferences */ undefined);
-    console_1.assert((editInfo === null || editInfo === void 0 ? void 0 : editInfo.commands) === undefined &&
-        (editInfo === null || editInfo === void 0 ? void 0 : editInfo.renameFilename) === undefined, "We cannot deal with refactorings which include commands or file renames.");
+    console_1.assert((editInfo === null || editInfo === void 0 ? void 0 : editInfo.commands) === undefined, "We cannot deal with refactorings which include commands.");
     return editInfo;
 }
 function getRefactorResult(project, refactorInfo) {
