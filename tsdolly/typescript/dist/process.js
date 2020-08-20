@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 exports.__esModule = true;
-exports.tsdolly = exports.CLI_OPTIONS = exports.Refactoring = void 0;
+exports.process = exports.CLI_OPTIONS = exports.Refactoring = void 0;
 var yargs = require("yargs");
 var fs = require("fs");
 var Ajv = require("ajv");
@@ -20,7 +20,7 @@ var path = require("path");
 var ts_morph_1 = require("ts-morph");
 var console_1 = require("console");
 var build_1 = require("./build");
-var ROOT_DIR = path.join(path.resolve(__dirname), "..");
+var ROOT_DIR = path.join(path.resolve(__dirname), ".."); // "tsdolly/typescript" dir
 var SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "schema", "types.json"), {
     encoding: "utf-8"
 }));
@@ -67,13 +67,13 @@ exports.CLI_OPTIONS = {
 };
 function main() {
     var opts = yargs
-        .usage("To do") // TODO: write usage
+        .usage('$0 [args]')
         .option(exports.CLI_OPTIONS)
-        .epilogue("TODO: epilogue").argv;
+        .argv;
     var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring });
-    tsdolly(cliOpts);
+    process(cliOpts);
 }
-function tsdolly(opts) {
+function process(opts) {
     var solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     var solutionsRaw = JSON.parse(solutionFile);
     var ajv = new Ajv();
@@ -89,7 +89,7 @@ function tsdolly(opts) {
     var results = analyzePrograms(programs, opts);
     printResults(results, opts);
 }
-exports.tsdolly = tsdolly;
+exports.process = process;
 function sampleSolutions(solutions, opts) {
     if (opts.first) {
         console_1.assert(opts.first > 0, "Expected option 'first' to be a positive integer, but it is " + opts.first + ".");
@@ -120,7 +120,7 @@ function printResults(results, opts) {
     /* replacer */ undefined, 
     /* space */ 4);
     try {
-        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf8" });
+        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf-8" });
         console.log("Results JSON written to " + opts.result);
     }
     catch (error) {

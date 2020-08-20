@@ -12,7 +12,10 @@ var __assign = (this && this.__assign) || function () {
 };
 exports.__esModule = true;
 var yargs = require("yargs");
+var path = require("path");
+var cp = require("child_process");
 var process_1 = require("./process");
+var process_2 = require("process");
 var SOLVERS = ["SAT4J", "MiniSat"];
 var JAVA_OPTS = {
     "command": {
@@ -31,27 +34,55 @@ var JAVA_OPTS = {
         describe: "SAT solver to be used in Alloy API",
         type: "string",
         choices: SOLVERS
-    },
-    "count": {
-        describe: "Count solutions instead of generating them",
-        type: "boolean"
     }
 };
-var newProcessOpts = __assign(__assign({}, process_1.CLI_OPTIONS), { solution: null });
+var newProcessOpts = {
+    refactoring: process_1.CLI_OPTIONS.refactoring,
+    applyRefactoring: process_1.CLI_OPTIONS.applyRefactoring,
+    result: process_1.CLI_OPTIONS.result,
+    first: process_1.CLI_OPTIONS.first,
+    skip: process_1.CLI_OPTIONS.skip
+};
 var OPTS = __assign(__assign({}, JAVA_OPTS), newProcessOpts);
 function main() {
     var opts = yargs
-        .usage("To do") // TODO: write usage
+        .usage('$0 [args]')
         .option(OPTS)
-        .epilogue("TODO: epilogue").argv;
-    var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring });
-    // TODO: call java
-    // TODO: pass "../../typescript.als" as model (using path.join?)
-    // tsdolly(cliOpts);
+        .argv;
+    var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring, solver: opts.solver });
+    tsdolly(cliOpts);
 }
+function tsdolly(opts) {
+    var solutionPath = generateSolutions(opts);
+    process_1.process(__assign(__assign({}, opts), { solution: solutionPath }));
+}
+var ROOT_DIR = path.join(path.resolve(__dirname), "..", "..");
 function generateSolutions(opts) {
-    // cp.execFileSync();
-    return "";
+    var javaDir = path.join(ROOT_DIR, "java");
+    var args = [];
+    if (opts.command) {
+        args.push("--command=\"" + opts.command + "\"");
+    }
+    if (opts.model) {
+        args.push("--model=\"" + opts.model + "\"");
+    }
+    if (opts.output) {
+        args.push("--output=\"" + path.resolve(process_2.cwd(), opts.output) + "\"");
+    }
+    if (opts.solver) {
+        args.push("--solver=\"" + opts.solver + "\"");
+    }
+    var command = path.join(javaDir, "gradlew") + " run --args=\"" + args.join(" ") + "\"";
+    var _ = cp.execSync(
+    /* command */ command, 
+    /* options */ {
+        encoding: "utf-8",
+        cwd: javaDir
+    });
+    if (opts.output) {
+        return path.resolve(process_2.cwd(), opts.output);
+    }
+    return path.resolve(path.join(ROOT_DIR, "java"), path.join("..", "solutions", "solutions.json"));
 }
 if (!module.parent) {
     main();

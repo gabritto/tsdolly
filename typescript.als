@@ -322,9 +322,9 @@ run ExtractSymbol for 0 but
 	2 Expression,
 	1 StringConcat,
 	1 StringLiteral,
-	1 ParameterDecl,
+	1 ParameterDecl, -- Maybe should be 2?
 	1 ParameterIdentifier,
-	0 VariableAccess
+	1 VariableAccess -- Maybe should be 2?
 
 /*
 	Refactoring: Move to a new file.

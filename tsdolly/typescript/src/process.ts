@@ -12,7 +12,7 @@ import * as types from "./types";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
-const ROOT_DIR = path.join(path.resolve(__dirname), "..");
+const ROOT_DIR = path.join(path.resolve(__dirname), ".."); // "tsdolly/typescript" dir
 const SCHEMA: Schema = JSON.parse(
     fs.readFileSync(path.join(ROOT_DIR, "schema", "types.json"), {
         encoding: "utf-8",
@@ -73,18 +73,18 @@ export const CLI_OPTIONS = {
 
 function main(): void {
     const opts = yargs
-        .usage("To do") // TODO: write usage
+        .usage('$0 [args]')
         .option(CLI_OPTIONS)
-        .epilogue("TODO: epilogue").argv;
+        .argv;
 
     const cliOpts = {
         ...opts,
         refactoring: opts.refactoring as Refactoring,
     };
-    tsdolly(cliOpts);
+    process(cliOpts);
 }
 
-export function tsdolly(opts: CliOpts): void {
+export function process(opts: CliOpts): void {
     const solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     const solutionsRaw: unknown = JSON.parse(solutionFile);
     const ajv = new Ajv();
@@ -179,7 +179,7 @@ Refactorable rate: ${aggregate.refactorableRate * 100}%
         /* space */ 4
     );
     try {
-        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf8" });
+        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf-8" });
         console.log(`Results JSON written to ${opts.result}`);
     } catch (error) {
         console.log(
