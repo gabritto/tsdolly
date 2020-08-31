@@ -19,9 +19,9 @@ one sig Program {
 }
 
 -- ===== Declarations =====
-abstract sig Declaration {} -- Top-level declarations. TODO: rethink this design if we want to have nested Declarations
+abstract sig Declaration {} -- Top-level declarations.
 fact DeclarationParent {
-	all d: Declaration | one p: Program | d in p.declarations -- TODO: this is only for top-level decls
+	all d: Declaration | one p: Program | d in p.declarations
 }
 
 // Function
@@ -37,7 +37,6 @@ sig ClassDecl extends Declaration {
 	extend: lone ClassDecl,
 	methods: set MethodDecl,
 	fields: set Field,
-	-- TODO: constructor
 }
 
 fact ClassExtendNoCycle {
@@ -172,8 +171,14 @@ fact FunctionCalledExists {
 	all c: FunctionCall | some f: FunctionDecl | c.name = f.name
 }
 
-fact FunctionCallArity {
-	all c: FunctionCall, f: FunctionDecl | c.name = f.name implies #c.arguments = #f.parameters
+-- Arity and types of arguments of function call should match those of function declaration.
+-- Note that this does not guarantee the absence of compilation errors due to argument/parameter mismatch,
+-- because the order of arguments matters but we are not encoding order of arguments/parameters in our model.
+fact FunctionCallArguments {
+	all c: FunctionCall, f: FunctionDecl | c.name = f.name implies {
+		#c.arguments = #f.parameters
+		c.arguments.variable.~(Field <: name + ParameterDecl <: name).(Field <: type + ParameterDecl <: type) = f.parameters.type
+	}
 }
 
 sig MethodCall extends Expression {
@@ -181,6 +186,7 @@ sig MethodCall extends Expression {
 	arguments: set VariableAccess
 }
 
+-- Defines where a method can be called.
 fact MethodCalledExists {
 	all mc: MethodCall | some m: MethodDecl {
 		mc.name = m.name -- The method name exists.
@@ -193,9 +199,13 @@ fact MethodCalledExists {
 	all c: MethodCall | c.~expression.~(MethodDecl <: body + FunctionDecl <: body) in MethodDecl -- Method calls can only appear in method bodies, not functions.
 }
 
-fact MethodCallArity {
-	all c: MethodCall, m: MethodDecl {
-		c.name = m.name implies #c.arguments = #m.parameters
+-- Arity and types of arguments of method call should match those of method declaration.
+-- Note that this does not guarantee the absence of compilation errors due to argument/parameter mismatch,
+-- because the order of arguments matters but we are not encoding order of arguments/parameters in our model.
+fact MethodCallArguments {
+	all c: MethodCall, m: MethodDecl | c.name = m.name implies {
+		#c.arguments = #m.parameters
+		c.arguments.variable.~(Field <: name + ParameterDecl <: name).(Field <: type + ParameterDecl <: type) = m.parameters.type
 	}
 }
 
@@ -222,10 +232,6 @@ abstract sig PrimType extends Type {}
 one sig TNumber extends PrimType {}
 one sig TString extends PrimType {}
 
-// TODO: use this later for extract type refactoring
-//sig InterfaceType extends Type {}
-//sig ObjectLiteralType extends Type {}
-
 -- ===== Commands =====
 pred default {}
 run default for 2
@@ -240,19 +246,19 @@ run small for 1
 pred ConvertParamsToDestructuredObject {
 	(some f: FunctionDecl | #f.parameters > 1) or (some m: MethodDecl | #m.parameters > 1)
 }
-run ConvertParamsToDestructuredObject for 0 but
-	// 2 Declaration, -- TODO: should we have this?
-	2 FunctionDecl,
-	2 FunctionIdentifier,
-	2 Block,
-	2 Expression,
-	0 StringConcat,
-	2 ParameterDecl,
-	2 ParameterIdentifier,
-	2 ClassDecl,
-	2 ClassIdentifier,
-	2 MethodDecl,
-	2 MethodIdentifier
+run ConvertParamsToDestructuredObject for 2 but 0 StringConcat
+// run ConvertParamsToDestructuredObject for 0 but
+// 	2 FunctionDecl,
+// 	2 FunctionIdentifier,
+// 	2 Block,
+// 	2 Expression,
+// 	0 StringConcat,
+// 	2 ParameterDecl,
+// 	2 ParameterIdentifier,
+// 	2 ClassDecl,
+// 	2 ClassIdentifier,
+// 	2 MethodDecl,
+// 	2 MethodIdentifier
 
 /*
 	Refactoring: Convert to template string.
@@ -261,21 +267,22 @@ run ConvertParamsToDestructuredObject for 0 but
 pred ConvertToTemplateString {
 	one StringConcat
 }
-run ConvertToTemplateString for 0 but
-	1 Declaration,
-	2 Expression,
-	3 StringLiteral, -- TODO: should this be 2 or 3?
-	1 ParameterDecl,
-	1 ParameterIdentifier,
-	1 Field,
-	1 FieldIdentifier,
-	1 ClassDecl,
-	1 ClassIdentifier,
-	1 FunctionDecl,
-	1 FunctionIdentifier,
-	1 MethodDecl,
-	1 MethodIdentifier,
-	1 Block
+run ConvertToTemplateString for 2
+// run ConvertToTemplateString for 0 but
+// 	2 Declaration,
+// 	3 Expression,
+// 	3 StringLiteral,
+// 	1 ParameterDecl,
+// 	1 ParameterIdentifier,
+// 	1 Field,
+// 	1 FieldIdentifier,
+// 	1 ClassDecl,
+// 	1 ClassIdentifier,
+// 	1 FunctionDecl,
+// 	1 FunctionIdentifier,
+// 	1 MethodDecl,
+// 	1 MethodIdentifier,
+// 	1 Block
 
 /*
 	Refactoring: Generate 'get' and 'set' accessors.
@@ -284,47 +291,49 @@ run ConvertToTemplateString for 0 but
 pred GenerateGetAndSetAccessor {
 	some c: ClassDecl | #c.fields > 0
 }
-// run GenerateGetAndSetAccessor for 2 but 1 Field, 0 FunctionDecl, 0 StringConcat
-run GenerateGetAndSetAccessor for 0 but
-	2 Declaration,
-	2 Field,
-	2 FieldIdentifier,
-	2 ClassDecl,
-	2 ClassIdentifier,
-	1 MethodDecl,
-	1 MethodIdentifier,
-	1 ParameterDecl,
-	1 ParameterIdentifier,
-	2 Expression,
-	0 StringConcat,
-	1 Block,
-	0 FunctionDecl
+run GenerateGetAndSetAccessor for 2 // but 0 StringConcat// but 1 Field, 0 FunctionDecl, 0 StringConcat
+// run GenerateGetAndSetAccessor for 0 but
+// 	2 Declaration,
+// 	2 Field,
+// 	2 FieldIdentifier,
+// 	2 ClassDecl,
+// 	2 ClassIdentifier,
+// 	1 MethodDecl,
+// 	1 MethodIdentifier,
+// 	1 ParameterDecl,
+// 	1 ParameterIdentifier,
+// 	2 Expression,
+// 	0 StringConcat,
+// 	1 Block,
+// 	0 FunctionDecl
 
 /*
 	Refactoring: Extract Symbol.
-	Condition: there should be a method or function call, or a string literal.
+	Condition: there should be a method or function call, or a string literal, or a field access.
 */
 pred ExtractSymbol {
-	some (FunctionCall + MethodCall) or some StringLiteral
+	some (FunctionCall + MethodCall) or some StringLiteral or {
+		some f: FieldIdentifier | some f.~variable
+	}
 }
-// run ExtractSymbol for 1
-run ExtractSymbol for 0 but
-	2 Declaration,
-	2 FunctionDecl,
-	2 FunctionIdentifier,
-	2 ClassDecl,
-	2 ClassIdentifier,
-	1 MethodDecl,
-	1 MethodIdentifier,
-	1 Field,
-	1 FieldIdentifier,
-	2 Block,
-	2 Expression,
-	1 StringConcat,
-	1 StringLiteral,
-	1 ParameterDecl, -- Maybe should be 2?
-	1 ParameterIdentifier,
-	1 VariableAccess -- Maybe should be 2?
+run ExtractSymbol for 2
+// run ExtractSymbol for 0 but
+	// 2 Declaration,
+	// 2 FunctionDecl,
+	// 2 FunctionIdentifier,
+	// 2 ClassDecl,
+	// 2 ClassIdentifier,
+	// 1 MethodDecl,
+	// 1 MethodIdentifier,
+	// 1 Field,
+	// 1 FieldIdentifier,
+	// 2 Block,
+	// 2 Expression,
+	// 1 StringConcat,
+	// 1 StringLiteral,
+	// 2 ParameterDecl,
+	// 2 ParameterIdentifier,
+	// 2 VariableAccess
 
 /*
 	Refactoring: Move to a new file.
@@ -333,15 +342,17 @@ run ExtractSymbol for 0 but
 pred MoveToNewFile {
 	some (FunctionDecl + ClassDecl)
 }
-// run MoveToNewFile for 1
-run MoveToNewFile for 0 but
-	2 Declaration,
-	2 FunctionDecl,
-	2 FunctionIdentifier,
-	2 ClassDecl,
-	2 ClassIdentifier,
-	1 MethodDecl,
-	1 MethodIdentifier,
-	2 Block,
-	1 Expression,
-	0 StringConcat
+run MoveToNewFile for 2 but 0 StringConcat
+// run MoveToNewFile for 0 but
+// 	2 Declaration,
+// 	2 FunctionDecl,
+// 	2 FunctionIdentifier,
+// 	2 ClassDecl,
+// 	2 ClassIdentifier,
+// 	1 MethodDecl,
+// 	1 MethodIdentifier,
+// 	1 Field,
+// 	1 FieldIdentifier,
+// 	2 Block,
+// 	2 Expression,
+// 	0 StringConcat
