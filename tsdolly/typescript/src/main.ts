@@ -31,9 +31,14 @@ const JAVA_OPTS = {
     },
     "solver": {
         describe: "SAT solver to be used in Alloy API",
-        type: "string",
         choices: SOLVERS,
     },
+} as const;
+
+const COUNT_OPTS = {
+    command: JAVA_OPTS.command,
+    model: JAVA_OPTS.model,
+    solver: JAVA_OPTS.solver,
 } as const;
 
 type NewProcessOpts = Omit<ProcessOpts, "solution">;
@@ -48,20 +53,43 @@ const newProcessOpts: Omit<typeof PROCESS_OPTS, "solution"> = {
 const OPTS = { ...JAVA_OPTS, ...newProcessOpts };
 
 function main(): void {
-    const opts = yargs
-        .usage('$0 [args]')
-        .option(OPTS)
+    yargs
+        .usage('$0 <cmd> [args]')
+        .command("count", "Count the number of solutions (TypeScript programs) that a command generates",
+            COUNT_OPTS,
+            count,
+        )
+        .command("generate", "Generate the TypeScript programs and test refactorings",
+            OPTS,
+            tsdolly,
+        )
         .argv;
-
-    const cliOpts = {
-        ...opts,
-        refactoring: opts.refactoring as Refactoring,
-        solver: opts.solver as Solver,
-    };
-    tsdolly(cliOpts);
 }
 
-function tsdolly(opts: JavaOpts & NewProcessOpts) {
+function count(opts: Omit<JavaOpts, "output">): void {
+    const javaDir = path.join(ROOT_DIR, "java");
+    const args: string[] = [];
+    if (opts.command) {
+        args.push(`--command="${opts.command}"`);
+    }
+    if (opts.model) {
+        args.push(`--model="${opts.model}"`);
+    }
+    if (opts.solver) {
+        args.push(`--solver="${opts.solver}"`);
+    }
+
+    const command = `${path.join(javaDir, "gradlew")} run --args="--count ${args.join(" ")}"`;
+    const exec = cp.execSync(
+        /* command */ command,
+        /* options */ {
+            encoding: "utf-8",
+            cwd: javaDir,
+            stdio: "inherit",
+        });
+}
+
+function tsdolly(opts: JavaOpts & NewProcessOpts): void {
     const solutionPath = generateSolutions(opts);
     process({ ...opts, solution: solutionPath });
 }
@@ -91,6 +119,7 @@ function generateSolutions(opts: JavaOpts): string {
         /* options */ {
             encoding: "utf-8",
             cwd: javaDir,
+            stdio: "inherit",
         });
     
     if (opts.output) {

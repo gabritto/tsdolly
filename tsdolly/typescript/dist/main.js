@@ -32,9 +32,13 @@ var JAVA_OPTS = {
     },
     "solver": {
         describe: "SAT solver to be used in Alloy API",
-        type: "string",
         choices: SOLVERS
     }
+};
+var COUNT_OPTS = {
+    command: JAVA_OPTS.command,
+    model: JAVA_OPTS.model,
+    solver: JAVA_OPTS.solver
 };
 var newProcessOpts = {
     refactoring: process_1.CLI_OPTIONS.refactoring,
@@ -45,12 +49,32 @@ var newProcessOpts = {
 };
 var OPTS = __assign(__assign({}, JAVA_OPTS), newProcessOpts);
 function main() {
-    var opts = yargs
-        .usage('$0 [args]')
-        .option(OPTS)
+    yargs
+        .usage('$0 <cmd> [args]')
+        .command("count", "Count the number of solutions (TypeScript programs) that a command generates", COUNT_OPTS, count)
+        .command("generate", "Generate the TypeScript programs and test refactorings", OPTS, tsdolly)
         .argv;
-    var cliOpts = __assign(__assign({}, opts), { refactoring: opts.refactoring, solver: opts.solver });
-    tsdolly(cliOpts);
+}
+function count(opts) {
+    var javaDir = path.join(ROOT_DIR, "java");
+    var args = [];
+    if (opts.command) {
+        args.push("--command=\"" + opts.command + "\"");
+    }
+    if (opts.model) {
+        args.push("--model=\"" + opts.model + "\"");
+    }
+    if (opts.solver) {
+        args.push("--solver=\"" + opts.solver + "\"");
+    }
+    var command = path.join(javaDir, "gradlew") + " run --args=\"--count " + args.join(" ") + "\"";
+    var exec = cp.execSync(
+    /* command */ command, 
+    /* options */ {
+        encoding: "utf-8",
+        cwd: javaDir,
+        stdio: "inherit"
+    });
 }
 function tsdolly(opts) {
     var solutionPath = generateSolutions(opts);
@@ -77,7 +101,8 @@ function generateSolutions(opts) {
     /* command */ command, 
     /* options */ {
         encoding: "utf-8",
-        cwd: javaDir
+        cwd: javaDir,
+        stdio: "inherit"
     });
     if (opts.output) {
         return path.resolve(process_2.cwd(), opts.output);

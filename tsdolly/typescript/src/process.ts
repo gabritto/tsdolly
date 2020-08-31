@@ -44,7 +44,6 @@ export const CLI_OPTIONS = {
     },
     "refactoring": {
         describe: "Refactoring to be analyzed",
-        type: "string",
         choices: Object.values(Refactoring),
         demandOption: true,
     },
@@ -76,12 +75,7 @@ function main(): void {
         .usage('$0 [args]')
         .option(CLI_OPTIONS)
         .argv;
-
-    const cliOpts = {
-        ...opts,
-        refactoring: opts.refactoring as Refactoring,
-    };
-    process(cliOpts);
+    process(opts);
 }
 
 export function process(opts: CliOpts): void {
