@@ -16,21 +16,22 @@ var path = require("path");
 var cp = require("child_process");
 var process_1 = require("./process");
 var process_2 = require("process");
+var perf_hooks_1 = require("perf_hooks");
 var SOLVERS = ["SAT4J", "MiniSat"];
 var JAVA_OPTS = {
-    "command": {
+    command: {
         describe: "Alloy command that should be run to generate solutions",
         type: "string"
     },
-    "model": {
+    model: {
         describe: "Path to Alloy model file",
         type: "string"
     },
-    "output": {
+    output: {
         describe: "Path of file where generated solutions should be saved",
         type: "string"
     },
-    "solver": {
+    solver: {
         describe: "SAT solver to be used in Alloy API",
         choices: SOLVERS
     }
@@ -45,15 +46,15 @@ var newProcessOpts = {
     applyRefactoring: process_1.CLI_OPTIONS.applyRefactoring,
     result: process_1.CLI_OPTIONS.result,
     first: process_1.CLI_OPTIONS.first,
-    skip: process_1.CLI_OPTIONS.skip
+    skip: process_1.CLI_OPTIONS.skip,
+    performance: process_1.CLI_OPTIONS.performance
 };
 var OPTS = __assign(__assign({}, JAVA_OPTS), newProcessOpts);
 function main() {
     yargs
-        .usage('$0 <cmd> [args]')
+        .usage("$0 <cmd> [args]")
         .command("count", "Count the number of solutions (TypeScript programs) that a command generates", COUNT_OPTS, count)
-        .command("generate", "Generate the TypeScript programs and test refactorings", OPTS, tsdolly)
-        .argv;
+        .command("generate", "Generate the TypeScript programs and test refactorings", OPTS, tsdolly).argv;
 }
 function count(opts) {
     var javaDir = path.join(ROOT_DIR, "java");
@@ -82,6 +83,7 @@ function tsdolly(opts) {
 }
 var ROOT_DIR = path.join(path.resolve(__dirname), "..", "..");
 function generateSolutions(opts) {
+    perf_hooks_1.performance.mark("start_generateSolutions");
     var javaDir = path.join(ROOT_DIR, "java");
     var args = [];
     if (opts.command) {
@@ -104,10 +106,15 @@ function generateSolutions(opts) {
         cwd: javaDir,
         stdio: "inherit"
     });
+    var solutionsPath;
     if (opts.output) {
-        return path.resolve(process_2.cwd(), opts.output);
+        solutionsPath = path.resolve(process_2.cwd(), opts.output);
     }
-    return path.resolve(path.join(ROOT_DIR, "java"), path.join("..", "solutions", "solutions.json"));
+    else {
+        solutionsPath = path.resolve(path.join(ROOT_DIR, "java"), path.join("..", "solutions", "solutions.json"));
+    }
+    perf_hooks_1.performance.mark("end_generateSolutions");
+    return solutionsPath;
 }
 if (!module.parent) {
     main();

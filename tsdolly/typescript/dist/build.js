@@ -245,13 +245,6 @@ function buildMethodCall(methodCall) {
     /* argumentsArray */ args);
 }
 function getIdentifier(identifier) {
-    // switch (identifier.nodeType) {
-    //     case "FunctionIdentifier":
-    //         return `function${identifier.nodeId}`
-    //     case "ParameterIdentifier":
-    //         return `param${identifier.nodeId}`
-    // }
     return identifier.nodeId;
-    // TODO: prettify names
 }
 //# sourceMappingURL=build.js.map

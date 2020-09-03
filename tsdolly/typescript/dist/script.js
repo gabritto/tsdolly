@@ -21,9 +21,4 @@ function getErrorsByCode(results) {
     return _.groupBy(errors, function (error) { return error.code; });
 }
 exports.getErrorsByCode = getErrorsByCode;
-function prettyPrintError(result) {
-    console.log("Program:\n\u001B[34m" + result.program + "\u001B[0m\nErrors:\n" + result.program.errors
-        .map(function (e) { return e.messageText; })
-        .join("\n"));
-}
 //# sourceMappingURL=script.js.map

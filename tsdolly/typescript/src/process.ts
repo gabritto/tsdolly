@@ -3,6 +3,7 @@ import fs = require("fs");
 import Ajv = require("ajv");
 import _ = require("lodash");
 import path = require("path");
+import { PerformanceObserver, performance } from "perf_hooks";
 
 import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
 import { assert } from "console";
@@ -34,51 +35,56 @@ export interface CliOpts {
     result: string;
     skip?: number;
     first?: number;
+    performance?: string;
 }
 
 export const CLI_OPTIONS = {
-    "solution": {
+    solution: {
         describe: "Path to file containing the Alloy metamodel solutions",
         type: "string",
         demandOption: true,
     },
-    "refactoring": {
+    refactoring: {
         describe: "Refactoring to be analyzed",
         choices: Object.values(Refactoring),
         demandOption: true,
     },
-    "applyRefactoring" : {
+    applyRefactoring: {
         describe: "Whether we should apply available refactorings",
         type: "boolean",
         default: true,
     },
-    "result": {
+    result: {
         describe: "Path to file where results should be saved",
         type: "string",
         demandOption: true,
     },
-    "first": {
+    first: {
         describe: "Consider only the first n solutions",
         type: "number",
         conflicts: "skip",
     },
-    "skip": {
+    skip: {
         describe:
             "If specified, only one out of every n solutions will be analyzed",
         type: "number",
         conflicts: "first",
-    }
+    },
+    performance: {
+        describe:
+            "Path to file where performance entries should be saved. \
+            Performance entries will be discarded if unspecified.",
+        type: "string",
+    },
 } as const;
 
 function main(): void {
-    const opts = yargs
-        .usage('$0 [args]')
-        .option(CLI_OPTIONS)
-        .argv;
+    const opts = yargs.usage("$0 [args]").option(CLI_OPTIONS).argv;
     process(opts);
 }
 
 export function process(opts: CliOpts): void {
+    performance.mark("start_process");
     const solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     const solutionsRaw: unknown = JSON.parse(solutionFile);
     const ajv = new Ajv();
@@ -93,10 +99,32 @@ export function process(opts: CliOpts): void {
     console.log(
         `${solutions.length} solutions from a total of ${total} will be analyzed`
     );
+    performance.mark("start_buildProgram");
     const programs = solutions.map(buildProgram);
+    performance.mark("end_buildProgram");
+
     const results = analyzePrograms(programs, opts);
 
     printResults(results, opts);
+    performance.mark("end_process");
+
+    if (opts.performance) {
+        const perfEntries = JSON.stringify(
+            performance,
+            /* replacer */ undefined,
+            /* space */ 4
+        );
+        try {
+            fs.writeFileSync(opts.performance, perfEntries, {
+                encoding: "utf-8",
+            });
+            console.log(`Performance entries written to ${opts.performance}`);
+        } catch (error) {
+            console.log(
+                `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
+            );
+        }
+    }
 }
 
 function sampleSolutions(
@@ -207,7 +235,7 @@ function aggregateResults(results: Result[]): AggregateResult {
         compiling,
         compileRate: compiling / results.length,
         refactorable,
-        refactorableRate: refactorable / results.length
+        refactorableRate: refactorable / results.length,
     };
 }
 
@@ -236,11 +264,12 @@ function analyzeProgram(
     applyRefactoring: CliOpts["applyRefactoring"],
     refactoringPred: NodePredicate
 ): Result {
+    performance.mark(`start_analyzeProgram`);
     console.log(`Starting to analyze program ${index}`);
     const filePath = "program.ts";
     const project = buildProject(programText, filePath);
-    const sourceFile = project.getSourceFileOrThrow(filePath);
     const program = projectToProgram(project);
+    const sourceFile = project.getSourceFileOrThrow(filePath);
 
     // Refactor info
     const refactorsInfo = getRefactorInfo(
@@ -253,6 +282,7 @@ function analyzeProgram(
     );
 
     console.log(`Finished analyzing program ${index}`);
+    performance.mark(`end_analyzeProgram`);
     return {
         program,
         refactors: refactorsInfo,
@@ -361,6 +391,7 @@ function getRefactorInfo(
     enabledRefactoring: Refactoring,
     pred: NodePredicate
 ): RefactorInfo[] {
+    performance.mark(`start_getRefactorInfo`);
     let refactorsInfo: RefactorInfo[] = [];
     visit(file);
     refactorsInfo = _.uniqWith(refactorsInfo, (a, b) =>
@@ -379,6 +410,8 @@ function getRefactorInfo(
             }
         }
     }
+
+    performance.mark(`end_getRefactorInfo`);
     return refactorsInfo;
 
     function visit(node: ts.Node): void {

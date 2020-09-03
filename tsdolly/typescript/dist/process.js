@@ -6,6 +6,7 @@ var fs = require("fs");
 var Ajv = require("ajv");
 var _ = require("lodash");
 var path = require("path");
+var perf_hooks_1 = require("perf_hooks");
 var ts_morph_1 = require("ts-morph");
 var console_1 = require("console");
 var build_1 = require("./build");
@@ -22,45 +23,48 @@ var Refactoring;
     Refactoring["MoveToNewFile"] = "Move to a new file";
 })(Refactoring = exports.Refactoring || (exports.Refactoring = {}));
 exports.CLI_OPTIONS = {
-    "solution": {
+    solution: {
         describe: "Path to file containing the Alloy metamodel solutions",
         type: "string",
         demandOption: true
     },
-    "refactoring": {
+    refactoring: {
         describe: "Refactoring to be analyzed",
         choices: Object.values(Refactoring),
         demandOption: true
     },
-    "applyRefactoring": {
+    applyRefactoring: {
         describe: "Whether we should apply available refactorings",
         type: "boolean",
         "default": true
     },
-    "result": {
+    result: {
         describe: "Path to file where results should be saved",
         type: "string",
         demandOption: true
     },
-    "first": {
+    first: {
         describe: "Consider only the first n solutions",
         type: "number",
         conflicts: "skip"
     },
-    "skip": {
+    skip: {
         describe: "If specified, only one out of every n solutions will be analyzed",
         type: "number",
         conflicts: "first"
+    },
+    performance: {
+        describe: "Path to file where performance entries should be saved. \
+            Performance entries will be discarded if unspecified.",
+        type: "string"
     }
 };
 function main() {
-    var opts = yargs
-        .usage('$0 [args]')
-        .option(exports.CLI_OPTIONS)
-        .argv;
+    var opts = yargs.usage("$0 [args]").option(exports.CLI_OPTIONS).argv;
     process(opts);
 }
 function process(opts) {
+    perf_hooks_1.performance.mark("start_process");
     var solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
     var solutionsRaw = JSON.parse(solutionFile);
     var ajv = new Ajv();
@@ -72,9 +76,26 @@ function process(opts) {
     var total = solutions.length;
     solutions = sampleSolutions(solutions, opts);
     console.log(solutions.length + " solutions from a total of " + total + " will be analyzed");
+    perf_hooks_1.performance.mark("start_buildProgram");
     var programs = solutions.map(build_1.buildProgram);
+    perf_hooks_1.performance.mark("end_buildProgram");
     var results = analyzePrograms(programs, opts);
     printResults(results, opts);
+    perf_hooks_1.performance.mark("end_process");
+    if (opts.performance) {
+        var perfEntries = JSON.stringify(perf_hooks_1.performance, 
+        /* replacer */ undefined, 
+        /* space */ 4);
+        try {
+            fs.writeFileSync(opts.performance, perfEntries, {
+                encoding: "utf-8"
+            });
+            console.log("Performance entries written to " + opts.performance);
+        }
+        catch (error) {
+            console.log("Error " + error + " found while writing performance entries to file " + opts.performance + ".\n\tEntries:\n" + perfEntries);
+        }
+    }
 }
 exports.process = process;
 function sampleSolutions(solutions, opts) {
@@ -144,14 +165,16 @@ function analyzePrograms(programs, opts) {
     });
 }
 function analyzeProgram(programText, index, refactoring, applyRefactoring, refactoringPred) {
+    perf_hooks_1.performance.mark("start_analyzeProgram");
     console.log("Starting to analyze program " + index);
     var filePath = "program.ts";
     var project = build_1.buildProject(programText, filePath);
-    var sourceFile = project.getSourceFileOrThrow(filePath);
     var program = projectToProgram(project);
+    var sourceFile = project.getSourceFileOrThrow(filePath);
     // Refactor info
     var refactorsInfo = getRefactorInfo(project, program, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
     console.log("Finished analyzing program " + index);
+    perf_hooks_1.performance.mark("end_analyzeProgram");
     return {
         program: program,
         refactors: refactorsInfo
@@ -223,6 +246,7 @@ function isTopLevelDeclaration(node) {
     return ts_morph_1.ts.isFunctionDeclaration(node) || ts_morph_1.ts.isClassDeclaration(node);
 }
 function getRefactorInfo(project, program, file, applyRefactoring, enabledRefactoring, pred) {
+    perf_hooks_1.performance.mark("start_getRefactorInfo");
     var refactorsInfo = [];
     visit(file);
     refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
@@ -238,6 +262,7 @@ function getRefactorInfo(project, program, file, applyRefactoring, enabledRefact
             }
         }
     }
+    perf_hooks_1.performance.mark("end_getRefactorInfo");
     return refactorsInfo;
     function visit(node) {
         if (pred(node)) {

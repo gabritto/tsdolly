@@ -318,12 +318,5 @@ function buildMethodCall(methodCall: types.MethodCall): ts.CallExpression {
 }
 
 function getIdentifier(identifier: types.Identifier): string {
-    // switch (identifier.nodeType) {
-    //     case "FunctionIdentifier":
-    //         return `function${identifier.nodeId}`
-    //     case "ParameterIdentifier":
-    //         return `param${identifier.nodeId}`
-    // }
     return identifier.nodeId;
-    // TODO: prettify names
 }
