@@ -110,7 +110,7 @@ public class Program {
         return parseObject(programSig, this.programId);
     }
 
-    public JsonElement parseObject(Sig sig, Id objectId) { // TODO: implement cycle detection? Otherwise will have a stack overflow
+    private JsonElement parseObject(Sig sig, Id objectId) { // TODO: implement cycle detection? Otherwise will have a stack overflow
         var json = new JsonObject();
 
         json.add(Util.ID_FIELD, objectId.toJson());
