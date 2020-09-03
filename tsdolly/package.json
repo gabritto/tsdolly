@@ -2,7 +2,7 @@
     "name": "tsdolly",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "typescript/dist/main.js",
     "scripts": {
         "test": "",
         "ts-build": "tsc",
