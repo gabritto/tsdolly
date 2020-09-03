@@ -246,19 +246,7 @@ run small for 1
 pred ConvertParamsToDestructuredObject {
 	(some f: FunctionDecl | #f.parameters > 1) or (some m: MethodDecl | #m.parameters > 1)
 }
-run ConvertParamsToDestructuredObject for 2 but 0 StringConcat
-// run ConvertParamsToDestructuredObject for 0 but
-// 	2 FunctionDecl,
-// 	2 FunctionIdentifier,
-// 	2 Block,
-// 	2 Expression,
-// 	0 StringConcat,
-// 	2 ParameterDecl,
-// 	2 ParameterIdentifier,
-// 	2 ClassDecl,
-// 	2 ClassIdentifier,
-// 	2 MethodDecl,
-// 	2 MethodIdentifier
+run ConvertParamsToDestructuredObject for 2
 
 /*
 	Refactoring: Convert to template string.
@@ -268,21 +256,6 @@ pred ConvertToTemplateString {
 	one StringConcat
 }
 run ConvertToTemplateString for 2
-// run ConvertToTemplateString for 0 but
-// 	2 Declaration,
-// 	3 Expression,
-// 	3 StringLiteral,
-// 	1 ParameterDecl,
-// 	1 ParameterIdentifier,
-// 	1 Field,
-// 	1 FieldIdentifier,
-// 	1 ClassDecl,
-// 	1 ClassIdentifier,
-// 	1 FunctionDecl,
-// 	1 FunctionIdentifier,
-// 	1 MethodDecl,
-// 	1 MethodIdentifier,
-// 	1 Block
 
 /*
 	Refactoring: Generate 'get' and 'set' accessors.
@@ -291,21 +264,7 @@ run ConvertToTemplateString for 2
 pred GenerateGetAndSetAccessor {
 	some c: ClassDecl | #c.fields > 0
 }
-run GenerateGetAndSetAccessor for 2 // but 0 StringConcat// but 1 Field, 0 FunctionDecl, 0 StringConcat
-// run GenerateGetAndSetAccessor for 0 but
-// 	2 Declaration,
-// 	2 Field,
-// 	2 FieldIdentifier,
-// 	2 ClassDecl,
-// 	2 ClassIdentifier,
-// 	1 MethodDecl,
-// 	1 MethodIdentifier,
-// 	1 ParameterDecl,
-// 	1 ParameterIdentifier,
-// 	2 Expression,
-// 	0 StringConcat,
-// 	1 Block,
-// 	0 FunctionDecl
+run GenerateGetAndSetAccessor for 2
 
 /*
 	Refactoring: Extract Symbol.
@@ -317,23 +276,6 @@ pred ExtractSymbol {
 	}
 }
 run ExtractSymbol for 2
-// run ExtractSymbol for 0 but
-	// 2 Declaration,
-	// 2 FunctionDecl,
-	// 2 FunctionIdentifier,
-	// 2 ClassDecl,
-	// 2 ClassIdentifier,
-	// 1 MethodDecl,
-	// 1 MethodIdentifier,
-	// 1 Field,
-	// 1 FieldIdentifier,
-	// 2 Block,
-	// 2 Expression,
-	// 1 StringConcat,
-	// 1 StringLiteral,
-	// 2 ParameterDecl,
-	// 2 ParameterIdentifier,
-	// 2 VariableAccess
 
 /*
 	Refactoring: Move to a new file.
@@ -342,17 +284,4 @@ run ExtractSymbol for 2
 pred MoveToNewFile {
 	some (FunctionDecl + ClassDecl)
 }
-run MoveToNewFile for 2 but 0 StringConcat
-// run MoveToNewFile for 0 but
-// 	2 Declaration,
-// 	2 FunctionDecl,
-// 	2 FunctionIdentifier,
-// 	2 ClassDecl,
-// 	2 ClassIdentifier,
-// 	1 MethodDecl,
-// 	1 MethodIdentifier,
-// 	1 Field,
-// 	1 FieldIdentifier,
-// 	2 Block,
-// 	2 Expression,
-// 	0 StringConcat
+run MoveToNewFile for 2
