@@ -1,0 +1,22 @@
+# With restricted scope (scope by sig):
+
+Convert parameters to destructured object: 73554
+Convert to template string: 344
+Generate 'get' and 'set' accessors: 2670
+Extract Symbol: 1897
+Move to a new file: 173
+
+# With scope 2 (all sigs):
+
+Convert parameters to destructured object: 315310
+Convert parameters to destructured object (no string concat): 164830
+Convert to template string: 239399
+Generate 'get' and 'set' accessors: 546968
+Generate 'get' and 'set' accessors (no string concat): 286750
+Extract Symbol: 288010
+Move to a new file: 499038
+Move to a new file (no string concat): 259639
+Empty predicate: 499039
+
+# Time
+413 programs, convert parameters to destructured object
