@@ -1,4 +1,17 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 exports.__esModule = true;
 exports.process = exports.CLI_OPTIONS = exports.Refactoring = void 0;
 var yargs = require("yargs");
@@ -6,9 +19,12 @@ var fs = require("fs");
 var Ajv = require("ajv");
 var _ = require("lodash");
 var path = require("path");
+var StreamArray = require("stream-json/streamers/StreamArray");
+var Chain = require("stream-chain");
 var perf_hooks_1 = require("perf_hooks");
 var ts_morph_1 = require("ts-morph");
 var console_1 = require("console");
+var stream_1 = require("stream");
 var build_1 = require("./build");
 var ROOT_DIR = path.join(path.resolve(__dirname), ".."); // "tsdolly/typescript" dir
 var SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "schema", "types.json"), {
@@ -60,109 +76,156 @@ exports.CLI_OPTIONS = {
     }
 };
 function main() {
-    var opts = yargs.usage("$0 [args]").option(exports.CLI_OPTIONS).argv;
+    var opts = yargs.usage("$0 [args]").options(exports.CLI_OPTIONS).argv;
     process(opts);
 }
 function process(opts) {
     perf_hooks_1.performance.mark("start_process");
-    var solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
-    var solutionsRaw = JSON.parse(solutionFile);
-    var ajv = new Ajv();
-    ajv.addSchema(SCHEMA, "types");
-    if (!ajv.validate({ $ref: "types#/definitions/Solutions" }, solutionsRaw)) {
-        throw ajv.errors;
-    }
-    var solutions = solutionsRaw;
-    var total = solutions.length;
-    solutions = sampleSolutions(solutions, opts);
-    console.log(solutions.length + " solutions from a total of " + total + " will be analyzed");
-    perf_hooks_1.performance.mark("start_buildProgram");
-    var programs = solutions.map(build_1.buildProgram);
-    perf_hooks_1.performance.mark("end_buildProgram");
-    var results = analyzePrograms(programs, opts);
-    printResults(results, opts);
-    perf_hooks_1.performance.mark("end_process");
-    if (opts.performance) {
-        var perfEntries = JSON.stringify(perf_hooks_1.performance, 
-        /* replacer */ undefined, 
-        /* space */ 4);
-        try {
-            fs.writeFileSync(opts.performance, perfEntries, {
-                encoding: "utf-8"
-            });
-            console.log("Performance entries written to " + opts.performance);
+    var input = fs.createReadStream(opts.solution, { encoding: "utf-8" });
+    var jsonParser = StreamArray.withParser();
+    var processor = new Process(opts);
+    // const jsonStringer = stringer() as Transform;
+    var jsonStringer = new Stringer({ writableObjectMode: true });
+    var output = fs.createWriteStream(opts.result, { encoding: "utf-8" });
+    var chain = new Chain([
+        jsonParser,
+        processor.processObject,
+        jsonStringer
+    ]);
+    chain.on("error", function (err) {
+        console.error("Chain failed: " + err.name + "\n" + err.message + "\n" + err.stack);
+        throw err;
+    });
+    var stream = input.pipe(chain).pipe(output);
+    // TODO: call processor.getAggregateResults on chain.finish
+    stream.on("finish", function () {
+        perf_hooks_1.performance.mark("end_process");
+        if (opts.performance) {
+            var perfEntries = JSON.stringify(perf_hooks_1.performance, 
+            /* replacer */ undefined, 
+            /* space */ 4);
+            try {
+                fs.writeFileSync(opts.performance, perfEntries, {
+                    encoding: "utf-8"
+                });
+                console.log("Performance entries written to " + opts.performance);
+            }
+            catch (error) {
+                console.log("Error " + error + " found while writing performance entries to file " + opts.performance + ".\n\tEntries:\n" + perfEntries);
+            }
         }
-        catch (error) {
-            console.log("Error " + error + " found while writing performance entries to file " + opts.performance + ".\n\tEntries:\n" + perfEntries);
-        }
-    }
+    });
+    console.log("OIIII");
 }
 exports.process = process;
-function sampleSolutions(solutions, opts) {
+var Stringer = /** @class */ (function (_super) {
+    __extends(Stringer, _super);
+    function Stringer() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.isFirst = true;
+        return _this;
+    }
+    Stringer.prototype._transform = function (obj, _encoding, callback) {
+        var str = JSON.stringify(obj, undefined, 4);
+        if (this.isFirst) {
+            str = "[" + str;
+        }
+        else {
+            str = ",\n" + str;
+        }
+        this.isFirst = false;
+        this.push(str);
+        callback();
+    };
+    Stringer.prototype._flush = function () {
+        this.push("\n]");
+    };
+    return Stringer;
+}(stream_1.Transform));
+var Process = /** @class */ (function () {
+    function Process(opts) {
+        var _this = this;
+        this.solutionCount = 0;
+        this.nextSample = -1;
+        this.compiling = 0;
+        this.refactorable = 0;
+        this.processObject = function (obj) {
+            // TODO: add perf marks.
+            var rawSolution = obj.value;
+            if (!_this.ajv.validate({ $ref: "types#/definitions/Program" }, rawSolution)) {
+                console.log("Validation error");
+                throw new Error("Object: " + JSON.stringify(rawSolution, undefined, 4) + "\nAjv error: \n" + _this.ajv.errorsText());
+            }
+            var solution = rawSolution;
+            var result = undefined;
+            if (_this.shouldSample()) {
+                console.log("Should sample");
+                console.log("Solution #" + _this.solutionCount + " will be analyzed");
+                result = _this.processProgram(solution);
+            }
+            // Update count
+            _this.solutionCount += 1;
+            return result;
+        };
+        this.ajv = new Ajv();
+        this.ajv.addSchema(SCHEMA, "types");
+        this.opts = validateOpts(opts);
+        var refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
+        if (!refactoringPred) {
+            throw new Error("Could not find node predicate for refactoring '" + opts.refactoring + "'.\nTo try and apply a refactoring, you need to first implement a predicate over nodes.\nThis predicate specifies to which nodes we should consider applying the refactoring.");
+        }
+        this.refactoringPred = refactoringPred;
+    }
+    Process.prototype.getAggregateResults = function () {
+        return {
+            total: this.solutionCount,
+            compiling: this.compiling,
+            compileRate: this.compiling / this.solutionCount,
+            refactorable: this.refactorable,
+            refactorableRate: this.refactorable / this.solutionCount
+        };
+    };
+    Process.prototype.shouldSample = function () {
+        if (this.opts.first) {
+            return this.solutionCount < this.opts.first;
+        }
+        // TODO: this strategy means we could potentially not sample the last "chunk",
+        // because `nextSample` could be larger than total solutions.
+        if (this.opts.skip) {
+            var chunkSize = this.opts.skip;
+            if (this.solutionCount % chunkSize === 0) {
+                this.nextSample = _.random(0, chunkSize - 1, false) + this.solutionCount;
+            }
+            return this.nextSample === this.solutionCount;
+        }
+        return true;
+    };
+    Process.prototype.processProgram = function (solution) {
+        perf_hooks_1.performance.mark("start_buildProgram");
+        var program = build_1.buildProgram(solution);
+        perf_hooks_1.performance.mark("end_buildProgram");
+        var result = analyzeProgram(program, this.solutionCount, this.opts.refactoring, this.opts.applyRefactoring, this.refactoringPred);
+        this.aggregateResult(result);
+        return result;
+    };
+    Process.prototype.aggregateResult = function (result) {
+        if (!result.program.hasError) {
+            this.compiling += 1;
+        }
+        if (result.refactors.length > 0) {
+            this.refactorable += 1;
+        }
+    };
+    return Process;
+}());
+function validateOpts(opts) {
     if (opts.first) {
         console_1.assert(opts.first > 0, "Expected option 'first' to be a positive integer, but it is " + opts.first + ".");
-        console_1.assert(opts.first <= solutions.length, "Expected option 'first' to be at most the number of solutions (" + solutions.length + "), but it is " + opts.first + ".");
-        return solutions.slice(0, opts.first);
     }
     if (opts.skip) {
         console_1.assert(opts.skip > 0, "Expected option 'skip' to be a positive integer, but it is " + opts.skip + ".");
-        console_1.assert(opts.skip <= solutions.length, "Expected option 'skip' to be at most the number of solutions (" + solutions.length + "), but it is " + opts.skip + ".");
-        return sample(solutions, opts.skip);
     }
-    return solutions;
-}
-function sample(solutions, skip) {
-    var sampledSolutions = [];
-    for (var start = 0; start < solutions.length; start += skip) {
-        var end = Math.min(start + skip, solutions.length);
-        // We want an element between [start, end).
-        var index = _.random(start, end - 1, false);
-        sampledSolutions.push(solutions[index]);
-    }
-    return sampledSolutions;
-}
-function printResults(results, opts) {
-    var aggregate = aggregateResults(results);
-    console.log("\nTotal programs: " + aggregate.total + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%\nPrograms that can be refactored (refactorable): " + aggregate.refactorable + "\nRefactorable rate: " + aggregate.refactorableRate * 100 + "%\n");
-    var jsonResults = JSON.stringify(results, 
-    /* replacer */ undefined, 
-    /* space */ 4);
-    try {
-        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf-8" });
-        console.log("Results JSON written to " + opts.result);
-    }
-    catch (error) {
-        console.log("Error " + error + " found while writing results to file " + opts.result + ".\n\tResults:\n " + jsonResults);
-    }
-}
-function aggregateResults(results) {
-    var compiling = 0;
-    var refactorable = 0;
-    for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
-        var result = results_1[_i];
-        if (!result.program.hasError) {
-            compiling += 1;
-        }
-        if (result.refactors.length > 0) {
-            refactorable += 1;
-        }
-    }
-    return {
-        total: results.length,
-        compiling: compiling,
-        compileRate: compiling / results.length,
-        refactorable: refactorable,
-        refactorableRate: refactorable / results.length
-    };
-}
-function analyzePrograms(programs, opts) {
-    var refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
-    if (!refactoringPred) {
-        throw new Error("Could not find node predicate for refactoring '" + opts.refactoring + "'.\nTo try and apply a refactoring, you need to first implement a predicate over nodes.\nThis predicate specifies to which nodes we should consider applying the refactoring.");
-    }
-    return programs.map(function (program, index) {
-        return analyzeProgram(program, index, opts.refactoring, opts.applyRefactoring, refactoringPred);
-    });
+    return opts;
 }
 function analyzeProgram(programText, index, refactoring, applyRefactoring, refactoringPred) {
     perf_hooks_1.performance.mark("start_analyzeProgram");

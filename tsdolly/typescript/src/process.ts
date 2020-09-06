@@ -3,10 +3,15 @@ import fs = require("fs");
 import Ajv = require("ajv");
 import _ = require("lodash");
 import path = require("path");
-import { PerformanceObserver, performance } from "perf_hooks";
+import StreamArray = require("stream-json/streamers/StreamArray");
+//@ts-ignore
+import { stringer } from "stream-json/jsonl/Stringer";
+import Chain = require('stream-chain');
 
+import { performance } from "perf_hooks";
 import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
 import { assert } from "console";
+import { Transform, TransformCallback, pipeline } from "stream";
 
 import { buildProject, buildProgram } from "./build";
 import * as types from "./types";
@@ -79,92 +84,191 @@ export const CLI_OPTIONS = {
 } as const;
 
 function main(): void {
-    const opts = yargs.usage("$0 [args]").option(CLI_OPTIONS).argv;
+    const opts = yargs.usage("$0 [args]").options(CLI_OPTIONS).argv;
     process(opts);
 }
 
 export function process(opts: CliOpts): void {
     performance.mark("start_process");
-    const solutionFile = fs.readFileSync(opts.solution, { encoding: "utf-8" });
-    const solutionsRaw: unknown = JSON.parse(solutionFile);
-    const ajv = new Ajv();
-    ajv.addSchema(SCHEMA, "types");
-    if (!ajv.validate({ $ref: "types#/definitions/Solutions" }, solutionsRaw)) {
-        throw ajv.errors;
-    }
-    let solutions = solutionsRaw as types.Solutions;
-    const total = solutions.length;
-    solutions = sampleSolutions(solutions, opts);
+    const input = fs.createReadStream(opts.solution, { encoding: "utf-8" });
+    const jsonParser = StreamArray.withParser();
+    const processor = new Process(opts);
+    // const jsonStringer = stringer() as Transform;
+    const jsonStringer = new Stringer({ writableObjectMode: true });
+    const output = fs.createWriteStream(opts.result, { encoding: "utf-8" });
+    const chain = new Chain([
+        jsonParser, 
+        processor.processObject, 
+        jsonStringer
+    ]);
+    chain.on("error", (err: Error) => {
+        console.error(`Chain failed: ${err.name}\n${err.message}\n${err.stack}`);
+        throw err;
+    })
+    const stream = input.pipe(chain).pipe(output);
+    // TODO: call processor.getAggregateResults on chain.finish
+    stream.on("finish", () => {
+        performance.mark("end_process");
 
-    console.log(
-        `${solutions.length} solutions from a total of ${total} will be analyzed`
-    );
-    performance.mark("start_buildProgram");
-    const programs = solutions.map(buildProgram);
-    performance.mark("end_buildProgram");
-
-    const results = analyzePrograms(programs, opts);
-
-    printResults(results, opts);
-    performance.mark("end_process");
-
-    if (opts.performance) {
-        const perfEntries = JSON.stringify(
-            performance,
-            /* replacer */ undefined,
-            /* space */ 4
-        );
-        try {
-            fs.writeFileSync(opts.performance, perfEntries, {
-                encoding: "utf-8",
-            });
-            console.log(`Performance entries written to ${opts.performance}`);
-        } catch (error) {
-            console.log(
-                `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
+        if (opts.performance) {
+            const perfEntries = JSON.stringify(
+                performance,
+                /* replacer */ undefined,
+                /* space */ 4
             );
+            try {
+                fs.writeFileSync(opts.performance, perfEntries, {
+                    encoding: "utf-8",
+                });
+                console.log(`Performance entries written to ${opts.performance}`);
+            } catch (error) {
+                console.log(
+                    `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
+                );
+            }
+        }
+    });
+}
+
+class Stringer extends Transform {
+    private isFirst = true;
+    _transform(obj: unknown, _encoding: BufferEncoding, callback: TransformCallback) {
+        let str = JSON.stringify(obj, undefined, 4);
+        if (this.isFirst) {
+            str = "[" + str;
+        }
+        else {
+            str = ",\n" + str;
+        }
+
+        this.isFirst = false;
+
+        this.push(str);
+        callback();
+    }
+    _flush() {
+        this.push("\n]")
+    }
+}
+
+class Process {
+    private solutionCount: number = 0;
+    private nextSample: number = -1;
+    private ajv: Ajv.Ajv;
+    private opts: CliOpts;
+    private refactoringPred: NodePredicate;
+    private compiling: number = 0;
+    private refactorable: number = 0;
+
+    constructor(opts: CliOpts) {
+        this.ajv = new Ajv();
+        this.ajv.addSchema(SCHEMA, "types");
+        this.opts = validateOpts(opts);
+        const refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
+        if (!refactoringPred) {
+            throw new Error(`Could not find node predicate for refactoring '${opts.refactoring}'.
+To try and apply a refactoring, you need to first implement a predicate over nodes.
+This predicate specifies to which nodes we should consider applying the refactoring.`);
+        }
+        this.refactoringPred = refactoringPred;
+    }
+
+    private getAggregateResults(): AggregateResult {
+        return {
+            total: this.solutionCount,
+            compiling: this.compiling,
+            compileRate: this.compiling / this.solutionCount,
+            refactorable: this.refactorable,
+            refactorableRate: this.refactorable / this.solutionCount,
+        };
+    }
+
+    processObject: (obj: { key: number, value: unknown}) => Result | undefined = (obj: { key: number, value: unknown}) => {
+        // TODO: add perf marks.
+        const rawSolution = obj.value; 
+        if (
+            !this.ajv.validate(
+                { $ref: "types#/definitions/Program" },
+                rawSolution
+            )
+        ) {
+            console.log("Validation error");
+            throw new Error(`Object: ${JSON.stringify(rawSolution, undefined, 4)}
+Ajv error: \n${this.ajv.errorsText()}`);
+        }
+        const solution = rawSolution as types.Program;
+        let result = undefined;
+        if (this.shouldSample()) {
+            console.log("Should sample");
+            console.log(
+                `Solution #${this.solutionCount} will be analyzed`
+            );
+            result = this.processProgram(solution);
+        }
+        // Update count
+        this.solutionCount += 1;
+        return result;
+    }
+
+    private shouldSample(): boolean {
+        if (this.opts.first) {
+            return this.solutionCount < this.opts.first;
+        }
+
+        // TODO: this strategy means we could potentially not sample the last "chunk",
+        // because `nextSample` could be larger than total solutions.
+        if (this.opts.skip) {
+            const chunkSize = this.opts.skip;
+            if (this.solutionCount % chunkSize === 0) {
+                this.nextSample = _.random(0, chunkSize - 1, false) + this.solutionCount;
+            }
+
+            return this.nextSample === this.solutionCount;
+        }
+
+        return true;
+    }
+
+    private processProgram(solution: types.Program): Result {
+        performance.mark("start_buildProgram");
+        const program = buildProgram(solution);
+        performance.mark("end_buildProgram");
+
+        const result = analyzeProgram(
+            program,
+            this.solutionCount,
+            this.opts.refactoring,
+            this.opts.applyRefactoring,
+            this.refactoringPred
+        );
+        this.aggregateResult(result);
+        return result;
+    }
+
+    private aggregateResult(result: Result): void {
+        if (!result.program.hasError) {
+            this.compiling += 1;
+        }
+        if (result.refactors.length > 0) {
+            this.refactorable += 1;
         }
     }
 }
 
-function sampleSolutions(
-    solutions: types.Solutions,
-    opts: Pick<CliOpts, "first" | "skip">
-): types.Solutions {
+function validateOpts(opts: CliOpts): CliOpts {
     if (opts.first) {
         assert(
             opts.first > 0,
             `Expected option 'first' to be a positive integer, but it is ${opts.first}.`
         );
-        assert(
-            opts.first <= solutions.length,
-            `Expected option 'first' to be at most the number of solutions (${solutions.length}), but it is ${opts.first}.`
-        );
-        return solutions.slice(0, opts.first);
     }
     if (opts.skip) {
         assert(
             opts.skip > 0,
             `Expected option 'skip' to be a positive integer, but it is ${opts.skip}.`
         );
-        assert(
-            opts.skip <= solutions.length,
-            `Expected option 'skip' to be at most the number of solutions (${solutions.length}), but it is ${opts.skip}.`
-        );
-        return sample(solutions, opts.skip);
     }
-    return solutions;
-}
-
-function sample(solutions: types.Solutions, skip: number): types.Solutions {
-    const sampledSolutions: types.Solutions = [];
-    for (let start = 0; start < solutions.length; start += skip) {
-        const end = Math.min(start + skip, solutions.length);
-        // We want an element between [start, end).
-        const index = _.random(start, end - 1, false);
-        sampledSolutions.push(solutions[index]);
-    }
-    return sampledSolutions;
+    return opts;
 }
 
 export interface Result {
@@ -184,77 +288,12 @@ export interface File {
     text: string;
 }
 
-function printResults(results: Result[], opts: CliOpts): void {
-    const aggregate = aggregateResults(results);
-
-    console.log(`
-Total programs: ${aggregate.total}
-Total programs that compile: ${aggregate.compiling}
-Compiling rate: ${aggregate.compileRate * 100}%
-Programs that can be refactored (refactorable): ${aggregate.refactorable}
-Refactorable rate: ${aggregate.refactorableRate * 100}%
-`);
-
-    const jsonResults = JSON.stringify(
-        results,
-        /* replacer */ undefined,
-        /* space */ 4
-    );
-    try {
-        fs.writeFileSync(opts.result, jsonResults, { encoding: "utf-8" });
-        console.log(`Results JSON written to ${opts.result}`);
-    } catch (error) {
-        console.log(
-            `Error ${error} found while writing results to file ${opts.result}.\n\tResults:\n ${jsonResults}`
-        );
-    }
-}
-
 export interface AggregateResult {
     total: number;
     compiling: number;
     compileRate: number;
     refactorable: number;
     refactorableRate: number;
-}
-
-function aggregateResults(results: Result[]): AggregateResult {
-    let compiling = 0;
-    let refactorable = 0;
-    for (const result of results) {
-        if (!result.program.hasError) {
-            compiling += 1;
-        }
-        if (result.refactors.length > 0) {
-            refactorable += 1;
-        }
-    }
-
-    return {
-        total: results.length,
-        compiling,
-        compileRate: compiling / results.length,
-        refactorable,
-        refactorableRate: refactorable / results.length,
-    };
-}
-
-function analyzePrograms(programs: string[], opts: CliOpts): Result[] {
-    const refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
-    if (!refactoringPred) {
-        throw new Error(`Could not find node predicate for refactoring '${opts.refactoring}'.
-To try and apply a refactoring, you need to first implement a predicate over nodes.
-This predicate specifies to which nodes we should consider applying the refactoring.`);
-    }
-    return programs.map((program, index) =>
-        analyzeProgram(
-            program,
-            index,
-            opts.refactoring,
-            opts.applyRefactoring,
-            refactoringPred
-        )
-    );
 }
 
 function analyzeProgram(

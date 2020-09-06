@@ -68,7 +68,9 @@ public class Generate implements Callable<Integer> {
             if (solutionsCount > 0) {
                 writer.write(",\n");
             }
-            System.out.printf("Writing solution %d...%n", solutionsCount);
+            if ((solutionsCount % 1000) == 0) {    
+                System.out.printf("Writing solution %d...%n", solutionsCount);
+            }
             writer.write(solutionJson.toString());
             solution = solution.next();
             solutionsCount += 1;
