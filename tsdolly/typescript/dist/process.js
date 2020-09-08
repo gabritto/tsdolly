@@ -81,25 +81,65 @@ function main() {
 }
 function process(opts) {
     perf_hooks_1.performance.mark("start_process");
-    var input = fs.createReadStream(opts.solution, { encoding: "utf-8" });
-    var jsonParser = StreamArray.withParser();
-    var processor = new Process(opts);
-    // const jsonStringer = stringer() as Transform;
-    var jsonStringer = new Stringer({ writableObjectMode: true });
-    var output = fs.createWriteStream(opts.result, { encoding: "utf-8" });
+    var input = fs.createReadStream(opts.solution, { encoding: "utf-8" }); // Input file stream
+    var jsonParser = StreamArray.withParser(); // JSON strings to objects transform stream
+    var processor = new Processor(opts); // TSDolly processing transform stream
+    var jsonStringer = new Stringer({ writableObjectMode: true }); // Objects to JSON array string stream
+    var output = fs.createWriteStream(opts.result, { encoding: "utf-8" }); // Output file stream
     var chain = new Chain([
         jsonParser,
         processor.processObject,
         jsonStringer
     ]);
-    chain.on("error", function (err) {
-        console.error("Chain failed: " + err.name + "\n" + err.message + "\n" + err.stack);
-        throw err;
+    var stream = stream_1.pipeline(input, chain, output, function (err) {
+        console.log("Pipeline callback");
+        if (err) {
+            console.log("Pipeline failed");
+            throw err;
+        }
     });
-    var stream = input.pipe(chain).pipe(output);
-    // TODO: call processor.getAggregateResults on chain.finish
-    stream.on("finish", function () {
+    input.on("end", function () {
+        console.log("Input end");
+    });
+    jsonParser.on("finish", function () {
+        console.log("json parser finish");
+    });
+    jsonParser.on("end", function () {
+        console.log("json parser end");
+    });
+    jsonStringer.on("finish", function () {
+        console.log("json stringer finish");
+    });
+    jsonStringer.on("end", function () {
+        console.log("json stringer end");
+    });
+    chain.on("finish", function () {
+        console.log("Chain finish");
+    });
+    chain.on("end", function () {
+        console.log("Chain end");
+    });
+    output.on("finish", function () {
+        console.log("Output finish");
+    });
+    output.on("close", function () {
+        console.log("Output close");
+    });
+    output.on("end", function () {
+        console.log("Output end");
+    });
+    output.on("error", function (err) {
+        console.log("Output error: " + err.message);
+    });
+    stream_1.finished(stream, function (err) {
+        console.log("Stream callback");
+        if (err) {
+            console.log("Stream failed");
+            throw err;
+        }
         perf_hooks_1.performance.mark("end_process");
+        console.log("Finished stream");
+        printAggregateResults(processor.getAggregateResults());
         if (opts.performance) {
             var perfEntries = JSON.stringify(perf_hooks_1.performance, 
             /* replacer */ undefined, 
@@ -115,7 +155,6 @@ function process(opts) {
             }
         }
     });
-    console.log("OIIII");
 }
 exports.process = process;
 var Stringer = /** @class */ (function (_super) {
@@ -137,33 +176,33 @@ var Stringer = /** @class */ (function (_super) {
         this.push(str);
         callback();
     };
-    Stringer.prototype._flush = function () {
+    Stringer.prototype._flush = function (callback) {
         this.push("\n]");
+        callback();
     };
     return Stringer;
 }(stream_1.Transform));
-var Process = /** @class */ (function () {
-    function Process(opts) {
+var Processor = /** @class */ (function () {
+    function Processor(opts) {
         var _this = this;
         this.solutionCount = 0;
+        this.sampleCount = 0;
         this.nextSample = -1;
         this.compiling = 0;
         this.refactorable = 0;
         this.processObject = function (obj) {
-            // TODO: add perf marks.
             var rawSolution = obj.value;
             if (!_this.ajv.validate({ $ref: "types#/definitions/Program" }, rawSolution)) {
-                console.log("Validation error");
-                throw new Error("Object: " + JSON.stringify(rawSolution, undefined, 4) + "\nAjv error: \n" + _this.ajv.errorsText());
+                throw new Error("Validation error.\nObject: " + JSON.stringify(rawSolution, undefined, 4) + "\nAjv error: \n" + _this.ajv.errorsText());
             }
             var solution = rawSolution;
             var result = undefined;
             if (_this.shouldSample()) {
-                console.log("Should sample");
                 console.log("Solution #" + _this.solutionCount + " will be analyzed");
+                _this.sampleCount += 1;
                 result = _this.processProgram(solution);
             }
-            // Update count
+            // Update solution count
             _this.solutionCount += 1;
             return result;
         };
@@ -176,16 +215,17 @@ var Process = /** @class */ (function () {
         }
         this.refactoringPred = refactoringPred;
     }
-    Process.prototype.getAggregateResults = function () {
+    Processor.prototype.getAggregateResults = function () {
         return {
             total: this.solutionCount,
+            sampled: this.sampleCount,
             compiling: this.compiling,
-            compileRate: this.compiling / this.solutionCount,
+            compileRate: this.compiling / this.sampleCount,
             refactorable: this.refactorable,
-            refactorableRate: this.refactorable / this.solutionCount
+            refactorableRate: this.refactorable / this.sampleCount
         };
     };
-    Process.prototype.shouldSample = function () {
+    Processor.prototype.shouldSample = function () {
         if (this.opts.first) {
             return this.solutionCount < this.opts.first;
         }
@@ -200,7 +240,7 @@ var Process = /** @class */ (function () {
         }
         return true;
     };
-    Process.prototype.processProgram = function (solution) {
+    Processor.prototype.processProgram = function (solution) {
         perf_hooks_1.performance.mark("start_buildProgram");
         var program = build_1.buildProgram(solution);
         perf_hooks_1.performance.mark("end_buildProgram");
@@ -208,7 +248,7 @@ var Process = /** @class */ (function () {
         this.aggregateResult(result);
         return result;
     };
-    Process.prototype.aggregateResult = function (result) {
+    Processor.prototype.aggregateResult = function (result) {
         if (!result.program.hasError) {
             this.compiling += 1;
         }
@@ -216,7 +256,7 @@ var Process = /** @class */ (function () {
             this.refactorable += 1;
         }
     };
-    return Process;
+    return Processor;
 }());
 function validateOpts(opts) {
     if (opts.first) {
@@ -226,6 +266,9 @@ function validateOpts(opts) {
         console_1.assert(opts.skip > 0, "Expected option 'skip' to be a positive integer, but it is " + opts.skip + ".");
     }
     return opts;
+}
+function printAggregateResults(aggregate) {
+    console.log("\nTotal programs: " + aggregate.total + "\nTotal programs sampled and analyzed: " + aggregate.sampled + "\nTotal programs that compile: " + aggregate.compiling + "\nCompiling rate: " + aggregate.compileRate * 100 + "%\nPrograms that can be refactored (refactorable): " + aggregate.refactorable + "\nRefactorable rate: " + aggregate.refactorableRate * 100 + "%");
 }
 function analyzeProgram(programText, index, refactoring, applyRefactoring, refactoringPred) {
     perf_hooks_1.performance.mark("start_analyzeProgram");
