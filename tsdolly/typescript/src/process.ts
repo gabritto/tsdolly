@@ -4,11 +4,11 @@ import Ajv = require("ajv");
 import _ = require("lodash");
 import path = require("path");
 import StreamArray = require("stream-json/streamers/StreamArray");
-import Chain = require('stream-chain');
+// import Chain = require('stream-chain');
 
 import { performance } from "perf_hooks";
 import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
-import { assert, Console } from "console";
+import { assert } from "console";
 import { Transform, TransformCallback, pipeline, finished } from "stream";
 
 import { buildProject, buildProgram } from "./build";
@@ -91,73 +91,36 @@ export function process(opts: CliOpts): void {
     const input = fs.createReadStream(opts.solution, { encoding: "utf-8" }); // Input file stream
     const jsonParser = StreamArray.withParser(); // JSON strings to objects transform stream
     const processor = new Processor(opts); // TSDolly processing transform stream
-    const jsonStringer = new Stringer({ writableObjectMode: true }); // Objects to JSON array string stream
+    const jsonStringer = new Stringer(); // Objects to JSON array string stream
     const output = fs.createWriteStream(opts.result, { encoding: "utf-8" }); // Output file stream
-    const chain = new Chain([
-        jsonParser,
-        processor.processObject,
-        jsonStringer
-    ]);
     const stream = pipeline(
         input,
-        chain,
+        jsonParser,
+        processor,
+        jsonStringer,
         output,
         (err) => {
-            console.log("Pipeline callback");
             if (err) {
                 console.log("Pipeline failed");
                 throw err;
             }
         }
     );
-    input.on("end", () => {
-        console.log("Input end");
-    });
-    jsonParser.on("finish", () => {
-        console.log("json parser finish");
-    })
-    jsonParser.on("end", () => {
-        console.log("json parser end");
-    })
-    jsonStringer.on("finish", () => {
-        console.log("json stringer finish");
-    });
-    jsonStringer.on("end", () => {
-        console.log("json stringer end");
-    });
-    chain.on("finish", () => {
-        console.log("Chain finish");
-    });
-    chain.on("end", () => {
-        console.log("Chain end");
-    })
-    output.on("finish", () => {
-        console.log("Output finish");
-    });
-    output.on("close", () => {
-        console.log("Output close");
-    });
-    output.on("end", () => {
-        console.log("Output end");
-    });
-    output.on("error", (err) => {
-        console.log("Output error: " + err.message);
-    });
 
     finished(stream, (err) => {
-        console.log("Stream callback");
         if (err) {
             console.log("Stream failed");
             throw err;
         }
 
         performance.mark("end_process");
-        console.log("Finished stream")
         printAggregateResults(processor.getAggregateResults());
+
+        console.log(`Results written to ${opts.result}`);
 
         if (opts.performance) {
             const perfEntries = JSON.stringify(
-                performance,
+                performance.getEntries(),
                 /* replacer */ undefined,
                 /* space */ 4
             );
@@ -165,7 +128,9 @@ export function process(opts: CliOpts): void {
                 fs.writeFileSync(opts.performance, perfEntries, {
                     encoding: "utf-8",
                 });
-                console.log(`Performance entries written to ${opts.performance}`);
+                console.log(
+                    `Performance entries written to ${opts.performance}`
+                );
             } catch (error) {
                 console.log(
                     `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
@@ -177,12 +142,20 @@ export function process(opts: CliOpts): void {
 
 class Stringer extends Transform {
     private isFirst = true;
-    _transform(obj: unknown, _encoding: BufferEncoding, callback: TransformCallback) {
+
+    constructor() {
+        super({ writableObjectMode: true });
+    }
+
+    _transform(
+        obj: unknown,
+        _encoding: BufferEncoding,
+        callback: TransformCallback
+    ) {
         let str = JSON.stringify(obj, undefined, 4);
         if (this.isFirst) {
             str = "[" + str;
-        }
-        else {
+        } else {
             str = ",\n" + str;
         }
 
@@ -191,12 +164,12 @@ class Stringer extends Transform {
         callback();
     }
     _flush(callback: TransformCallback) {
-        this.push("\n]")
+        this.push("\n]");
         callback();
     }
 }
 
-class Processor {
+class Processor extends Transform {
     private solutionCount: number = 0;
     private sampleCount: number = 0;
     private nextSample: number = -1;
@@ -207,6 +180,7 @@ class Processor {
     private refactorable: number = 0;
 
     constructor(opts: CliOpts) {
+        super({ writableObjectMode: true, readableObjectMode: true });
         this.ajv = new Ajv();
         this.ajv.addSchema(SCHEMA, "types");
         this.opts = validateOpts(opts);
@@ -217,6 +191,15 @@ To try and apply a refactoring, you need to first implement a predicate over nod
 This predicate specifies to which nodes we should consider applying the refactoring.`);
         }
         this.refactoringPred = refactoringPred;
+    }
+
+    _transform(
+        obj: { key: number; value: unknown },
+        _encoding: BufferEncoding,
+        callback: TransformCallback
+    ): void {
+        this.processObject(obj.value);
+        callback();
     }
 
     getAggregateResults(): AggregateResult {
@@ -230,8 +213,7 @@ This predicate specifies to which nodes we should consider applying the refactor
         };
     }
 
-    processObject: (obj: { key: number, value: unknown}) => Result | undefined = (obj: { key: number, value: unknown}) => {
-        const rawSolution = obj.value; 
+    private processObject(rawSolution: unknown): void {
         if (
             !this.ajv.validate(
                 { $ref: "types#/definitions/Program" },
@@ -243,17 +225,13 @@ Object: ${JSON.stringify(rawSolution, undefined, 4)}
 Ajv error: \n${this.ajv.errorsText()}`);
         }
         const solution = rawSolution as types.Program;
-        let result = undefined;
         if (this.shouldSample()) {
-            console.log(
-                `Solution #${this.solutionCount} will be analyzed`
-            );
+            console.log(`Solution #${this.solutionCount} will be analyzed`);
             this.sampleCount += 1;
-            result = this.processProgram(solution);
+            this.push(this.processProgram(solution)); // Push result to output of Transform Stream
         }
         // Update solution count
         this.solutionCount += 1;
-        return result;
     }
 
     private shouldSample(): boolean {
@@ -266,7 +244,8 @@ Ajv error: \n${this.ajv.errorsText()}`);
         if (this.opts.skip) {
             const chunkSize = this.opts.skip;
             if (this.solutionCount % chunkSize === 0) {
-                this.nextSample = _.random(0, chunkSize - 1, false) + this.solutionCount;
+                this.nextSample =
+                    _.random(0, chunkSize - 1, false) + this.solutionCount;
             }
 
             return this.nextSample === this.solutionCount;
@@ -350,7 +329,8 @@ Total programs sampled and analyzed: ${aggregate.sampled}
 Total programs that compile: ${aggregate.compiling}
 Compiling rate: ${aggregate.compileRate * 100}%
 Programs that can be refactored (refactorable): ${aggregate.refactorable}
-Refactorable rate: ${aggregate.refactorableRate * 100}%`);
+Refactorable rate: ${aggregate.refactorableRate * 100}%
+`);
 }
 
 function analyzeProgram(
