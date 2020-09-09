@@ -5,13 +5,21 @@ import _ = require("lodash");
 import path = require("path");
 import StreamArray = require("stream-json/streamers/StreamArray");
 
-import { performance, PerformanceObserver } from "perf_hooks";
+import { performance } from "perf_hooks";
 import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
 import { assert } from "console";
 import { Transform, TransformCallback, pipeline, finished } from "stream";
 
 import { buildProject, buildProgram } from "./build";
 import * as types from "./types";
+import { registerPerformance } from "./performance";
+import {
+    RefactorInfo,
+    Refactoring,
+    getRefactorInfo,
+    REFACTOR_TO_PRED,
+    NodePredicate,
+} from "./refactor";
 
 type Object = { [key: string]: object };
 type Schema = { definitions: Object };
@@ -21,14 +29,6 @@ const SCHEMA: Schema = JSON.parse(
         encoding: "utf-8",
     })
 );
-
-export enum Refactoring {
-    ConvertParamsToDestructuredObject = "Convert parameters to destructured object",
-    ConvertToTemplateString = "Convert to template string",
-    GenerateGetAndSetAccessors = "Generate 'get' and 'set' accessors",
-    ExtractSymbol = "Extract Symbol",
-    MoveToNewFile = "Move to a new file",
-}
 
 export interface CliOpts {
     solution: string;
@@ -82,6 +82,9 @@ export const CLI_OPTIONS = {
 
 function main(): void {
     const opts = yargs.usage("$0 [args]").options(CLI_OPTIONS).argv;
+    if (opts.performance) {
+        registerPerformance(opts.performance);
+    }
     process(opts);
 }
 
@@ -117,41 +120,6 @@ export function process(opts: CliOpts): void {
 
         console.log(`Results written to ${opts.result}`);
     });
-
-    if (opts.performance) {
-        registerPerformance(opts.performance);
-    }
-}
-
-function registerPerformance(path: string): void {
-    try {
-        fs.writeFileSync(path, "", {
-            encoding: "utf-8",
-        });
-    } catch (error) {
-        console.log(
-            `Error ${error} found while cleaning contents of performance file ${path}.`
-        );
-    }
-
-    new PerformanceObserver((list, observer) => {
-        const perfEntries = list
-            .getEntries()
-            .map((entry) =>
-                JSON.stringify(entry, /* replacer */ undefined, /* space */ 0)
-            );
-        try {
-            // Performance will be a JSONL file
-            fs.appendFileSync(path, "\n" + perfEntries.join("\n"), {
-                encoding: "utf-8",
-            });
-            console.log(`Performance entries appended to ${path}`);
-        } catch (error) {
-            console.log(
-                `Error ${error} found while writing performance entries to file ${path}.\n\tEntries:\n${perfEntries}`
-            );
-        }
-    }).observe({ entryTypes: ["mark"], buffered: true });
 }
 
 class Stringer extends Transform {
@@ -379,7 +347,7 @@ function analyzeProgram(
     };
 }
 
-function projectToProgram(project: Project): Program {
+export function projectToProgram(project: Project): Program {
     const files = project.getSourceFiles().map((file) => {
         return {
             fileName: file.getFilePath(),
@@ -434,198 +402,6 @@ function diagnosticToCompilerError(diagnostic: TsDiagnostic): CompilerError {
     };
 }
 
-type NodePredicate = (_: ts.Node) => boolean;
-
-interface RefactorInfo {
-    name: string;
-    action: string;
-    triggeringRange: ts.TextRange;
-    editInfo: ts.RefactorEditInfo;
-    resultingProgram?: Program;
-    introducesError?: boolean;
-}
-
-const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
-    [Refactoring.ConvertParamsToDestructuredObject, isParameter],
-    [Refactoring.ConvertToTemplateString, isStringConcat],
-    [Refactoring.GenerateGetAndSetAccessors, isField],
-    [Refactoring.ExtractSymbol, isCallOrLiteral],
-    [Refactoring.MoveToNewFile, isTopLevelDeclaration],
-]);
-
-function isStringConcat(node: ts.Node) {
-    return ts.isStringLiteral(node) && ts.isBinaryExpression(node.parent);
-}
-
-function isParameter(node: ts.Node) {
-    return ts.isParameter(node);
-}
-
-function isField(node: ts.Node) {
-    return ts.isPropertyDeclaration(node);
-}
-
-function isCallOrLiteral(node: ts.Node) {
-    return ts.isCallExpression(node) || ts.isLiteralExpression(node);
-}
-
-function isTopLevelDeclaration(node: ts.Node) {
-    return ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node);
-}
-
-function getRefactorInfo(
-    project: Project,
-    program: Program,
-    file: ts.SourceFile,
-    applyRefactoring: boolean,
-    enabledRefactoring: Refactoring,
-    pred: NodePredicate
-): RefactorInfo[] {
-    performance.mark(`start_getRefactorInfo`);
-    let refactorsInfo: RefactorInfo[] = [];
-    visit(file);
-    refactorsInfo = _.uniqWith(refactorsInfo, (a, b) =>
-        _.isEqual(a.editInfo, b.editInfo)
-    );
-
-    if (applyRefactoring) {
-        // TODO: should we apply refactorings even when program has error?
-        for (const refactorInfo of refactorsInfo) {
-            refactorInfo.resultingProgram = getRefactorResult(
-                project,
-                refactorInfo
-            );
-            if (refactorInfo.resultingProgram.hasError && !program.hasError) {
-                refactorInfo.introducesError = true;
-            }
-        }
-    }
-
-    performance.mark(`end_getRefactorInfo`);
-    return refactorsInfo;
-
-    function visit(node: ts.Node): void {
-        if (pred(node)) {
-            const refactorInfo = getApplicableRefactors(project, node).filter(
-                (refactorInfo) => enabledRefactoring === refactorInfo.name
-            );
-            refactorInfo.forEach((refactor) => {
-                refactor.actions.forEach((action) => {
-                    const edit = getEditInfo(
-                        project,
-                        node,
-                        refactor.name,
-                        action.name
-                    );
-                    if (edit) {
-                        refactorsInfo.push({
-                            name: refactor.name,
-                            action: action.name,
-                            editInfo: edit,
-                            triggeringRange: { pos: node.pos, end: node.end },
-                        });
-                    }
-                });
-            });
-        }
-
-        node.forEachChild(visit);
-    }
-}
-
-function getApplicableRefactors(
-    project: Project,
-    node: ts.Node
-): ts.ApplicableRefactorInfo[] {
-    const languageService = project.getLanguageService().compilerObject;
-    return languageService.getApplicableRefactors(
-        node.getSourceFile().fileName,
-        node,
-        /* preferences */ undefined
-    );
-}
-
-function getEditInfo(
-    project: Project,
-    node: ts.Node,
-    refactorName: string,
-    actionName: string
-): ts.RefactorEditInfo | undefined {
-    const languageService = project.getLanguageService().compilerObject;
-    const formatSettings = project.manipulationSettings.getFormatCodeSettings();
-    const editInfo = languageService.getEditsForRefactor(
-        node.getSourceFile().fileName,
-        /* formatOptions */ formatSettings,
-        node,
-        refactorName,
-        actionName,
-        /* preferences */ undefined
-    );
-    assert(
-        editInfo?.commands === undefined,
-        "We cannot deal with refactorings which include commands."
-    );
-    return editInfo;
-}
-
-function getRefactorResult(
-    project: Project,
-    refactorInfo: RefactorInfo
-): Program {
-    project = cloneProject(project);
-    return projectToProgram(applyRefactorEdits(project, refactorInfo));
-}
-
-function applyRefactorEdits(
-    project: Project,
-    refactorInfo: RefactorInfo
-): Project {
-    refactorInfo.editInfo.edits.forEach((change) =>
-        applyFileChange(project, change)
-    );
-    return project;
-}
-
-function cloneProject(project: Project): Project {
-    const newProject = new Project({
-        compilerOptions: project.getCompilerOptions(),
-    });
-    for (const file of project.getSourceFiles()) {
-        newProject.createSourceFile(file.getFilePath(), file.getFullText());
-    }
-
-    return newProject;
-}
-
-function applyFileChange(
-    project: Project,
-    fileChange: ts.FileTextChanges
-): void {
-    if (fileChange.isNewFile) {
-        const text = singleton(
-            fileChange.textChanges,
-            "Text changes for a new file should only have one change."
-        ).newText;
-        project.createSourceFile(fileChange.fileName, text);
-    } else {
-        const file = project.getSourceFileOrThrow(fileChange.fileName);
-        file.applyTextChanges(fileChange.textChanges);
-    }
-}
-
-function singleton<T>(arr: readonly T[], message?: string): T {
-    if (arr.length != 1) {
-        throw new Error(`Expected array to have exactly one item, but array has ${
-            arr.length
-        } items.
-${message || ""}`);
-    }
-
-    return arr[0];
-}
-
 if (!module.parent) {
-    performance.mark("start_main_process");
     main();
-    performance.mark("end_main_process");
 }

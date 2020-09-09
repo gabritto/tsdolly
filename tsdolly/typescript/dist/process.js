@@ -13,7 +13,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 exports.__esModule = true;
-exports.process = exports.CLI_OPTIONS = exports.Refactoring = void 0;
+exports.projectToProgram = exports.process = exports.CLI_OPTIONS = void 0;
 var yargs = require("yargs");
 var fs = require("fs");
 var Ajv = require("ajv");
@@ -25,18 +25,12 @@ var ts_morph_1 = require("ts-morph");
 var console_1 = require("console");
 var stream_1 = require("stream");
 var build_1 = require("./build");
+var performance_1 = require("./performance");
+var refactor_1 = require("./refactor");
 var ROOT_DIR = path.join(path.resolve(__dirname), ".."); // "tsdolly/typescript" dir
 var SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "schema", "types.json"), {
     encoding: "utf-8"
 }));
-var Refactoring;
-(function (Refactoring) {
-    Refactoring["ConvertParamsToDestructuredObject"] = "Convert parameters to destructured object";
-    Refactoring["ConvertToTemplateString"] = "Convert to template string";
-    Refactoring["GenerateGetAndSetAccessors"] = "Generate 'get' and 'set' accessors";
-    Refactoring["ExtractSymbol"] = "Extract Symbol";
-    Refactoring["MoveToNewFile"] = "Move to a new file";
-})(Refactoring = exports.Refactoring || (exports.Refactoring = {}));
 exports.CLI_OPTIONS = {
     solution: {
         describe: "Path to file containing the Alloy metamodel solutions",
@@ -45,7 +39,7 @@ exports.CLI_OPTIONS = {
     },
     refactoring: {
         describe: "Refactoring to be analyzed",
-        choices: Object.values(Refactoring),
+        choices: Object.values(refactor_1.Refactoring),
         demandOption: true
     },
     applyRefactoring: {
@@ -76,6 +70,9 @@ exports.CLI_OPTIONS = {
 };
 function main() {
     var opts = yargs.usage("$0 [args]").options(exports.CLI_OPTIONS).argv;
+    if (opts.performance) {
+        performance_1.registerPerformance(opts.performance);
+    }
     process(opts);
 }
 function process(opts) {
@@ -100,36 +97,8 @@ function process(opts) {
         printAggregateResults(processor.getAggregateResults());
         console.log("Results written to " + opts.result);
     });
-    if (opts.performance) {
-        registerPerformance(opts.performance);
-    }
 }
 exports.process = process;
-function registerPerformance(path) {
-    try {
-        fs.writeFileSync(path, "", {
-            encoding: "utf-8"
-        });
-    }
-    catch (error) {
-        console.log("Error " + error + " found while cleaning contents of performance file " + path + ".");
-    }
-    new perf_hooks_1.PerformanceObserver(function (list, observer) {
-        var perfEntries = list.getEntries().map(function (entry) { return JSON.stringify(entry, 
-        /* replacer */ undefined, 
-        /* space */ 0); });
-        try {
-            // Performance will be a JSONL file
-            fs.appendFileSync(path, "\n" + perfEntries.join("\n"), {
-                encoding: "utf-8"
-            });
-            console.log("Performance entries appended to " + path);
-        }
-        catch (error) {
-            console.log("Error " + error + " found while writing performance entries to file " + path + ".\n\tEntries:\n" + perfEntries);
-        }
-    }).observe({ entryTypes: ["mark"], buffered: true });
-}
 var Stringer = /** @class */ (function (_super) {
     __extends(Stringer, _super);
     function Stringer() {
@@ -167,7 +136,7 @@ var Processor = /** @class */ (function (_super) {
         _this.ajv = new Ajv();
         _this.ajv.addSchema(SCHEMA, "types");
         _this.opts = validateOpts(opts);
-        var refactoringPred = REFACTOR_TO_PRED.get(opts.refactoring);
+        var refactoringPred = refactor_1.REFACTOR_TO_PRED.get(opts.refactoring);
         if (!refactoringPred) {
             throw new Error("Could not find node predicate for refactoring '" + opts.refactoring + "'.\nTo try and apply a refactoring, you need to first implement a predicate over nodes.\nThis predicate specifies to which nodes we should consider applying the refactoring.");
         }
@@ -255,7 +224,7 @@ function analyzeProgram(programText, index, refactoring, applyRefactoring, refac
     var program = projectToProgram(project);
     var sourceFile = project.getSourceFileOrThrow(filePath);
     // Refactor info
-    var refactorsInfo = getRefactorInfo(project, program, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
+    var refactorsInfo = refactor_1.getRefactorInfo(project, program, sourceFile.compilerNode, applyRefactoring, refactoring, refactoringPred);
     console.log("Finished analyzing program " + index);
     perf_hooks_1.performance.mark("end_analyzeProgram");
     return {
@@ -279,6 +248,7 @@ function projectToProgram(project) {
         compilerOptions: project.getCompilerOptions()
     };
 }
+exports.projectToProgram = projectToProgram;
 function getCompilerError(project) {
     var tsDiagnostics = project
         .getPreEmitDiagnostics()
@@ -306,120 +276,7 @@ function diagnosticToCompilerError(diagnostic) {
         messageText: messageText
     };
 }
-var REFACTOR_TO_PRED = new Map([
-    [Refactoring.ConvertParamsToDestructuredObject, isParameter],
-    [Refactoring.ConvertToTemplateString, isStringConcat],
-    [Refactoring.GenerateGetAndSetAccessors, isField],
-    [Refactoring.ExtractSymbol, isCallOrLiteral],
-    [Refactoring.MoveToNewFile, isTopLevelDeclaration],
-]);
-function isStringConcat(node) {
-    return ts_morph_1.ts.isStringLiteral(node) && ts_morph_1.ts.isBinaryExpression(node.parent);
-}
-function isParameter(node) {
-    return ts_morph_1.ts.isParameter(node);
-}
-function isField(node) {
-    return ts_morph_1.ts.isPropertyDeclaration(node);
-}
-function isCallOrLiteral(node) {
-    return ts_morph_1.ts.isCallExpression(node) || ts_morph_1.ts.isLiteralExpression(node);
-}
-function isTopLevelDeclaration(node) {
-    return ts_morph_1.ts.isFunctionDeclaration(node) || ts_morph_1.ts.isClassDeclaration(node);
-}
-function getRefactorInfo(project, program, file, applyRefactoring, enabledRefactoring, pred) {
-    perf_hooks_1.performance.mark("start_getRefactorInfo");
-    var refactorsInfo = [];
-    visit(file);
-    refactorsInfo = _.uniqWith(refactorsInfo, function (a, b) {
-        return _.isEqual(a.editInfo, b.editInfo);
-    });
-    if (applyRefactoring) {
-        // TODO: should we apply refactorings even when program has error?
-        for (var _i = 0, refactorsInfo_1 = refactorsInfo; _i < refactorsInfo_1.length; _i++) {
-            var refactorInfo = refactorsInfo_1[_i];
-            refactorInfo.resultingProgram = getRefactorResult(project, refactorInfo);
-            if (refactorInfo.resultingProgram.hasError && !program.hasError) {
-                refactorInfo.introducesError = true;
-            }
-        }
-    }
-    perf_hooks_1.performance.mark("end_getRefactorInfo");
-    return refactorsInfo;
-    function visit(node) {
-        if (pred(node)) {
-            var refactorInfo = getApplicableRefactors(project, node).filter(function (refactorInfo) { return enabledRefactoring === refactorInfo.name; });
-            refactorInfo.forEach(function (refactor) {
-                refactor.actions.forEach(function (action) {
-                    var edit = getEditInfo(project, node, refactor.name, action.name);
-                    if (edit) {
-                        refactorsInfo.push({
-                            name: refactor.name,
-                            action: action.name,
-                            editInfo: edit,
-                            triggeringRange: { pos: node.pos, end: node.end }
-                        });
-                    }
-                });
-            });
-        }
-        node.forEachChild(visit);
-    }
-}
-function getApplicableRefactors(project, node) {
-    var languageService = project.getLanguageService().compilerObject;
-    return languageService.getApplicableRefactors(node.getSourceFile().fileName, node, 
-    /* preferences */ undefined);
-}
-function getEditInfo(project, node, refactorName, actionName) {
-    var languageService = project.getLanguageService().compilerObject;
-    var formatSettings = project.manipulationSettings.getFormatCodeSettings();
-    var editInfo = languageService.getEditsForRefactor(node.getSourceFile().fileName, 
-    /* formatOptions */ formatSettings, node, refactorName, actionName, 
-    /* preferences */ undefined);
-    console_1.assert((editInfo === null || editInfo === void 0 ? void 0 : editInfo.commands) === undefined, "We cannot deal with refactorings which include commands.");
-    return editInfo;
-}
-function getRefactorResult(project, refactorInfo) {
-    project = cloneProject(project);
-    return projectToProgram(applyRefactorEdits(project, refactorInfo));
-}
-function applyRefactorEdits(project, refactorInfo) {
-    refactorInfo.editInfo.edits.forEach(function (change) {
-        return applyFileChange(project, change);
-    });
-    return project;
-}
-function cloneProject(project) {
-    var newProject = new ts_morph_1.Project({
-        compilerOptions: project.getCompilerOptions()
-    });
-    for (var _i = 0, _a = project.getSourceFiles(); _i < _a.length; _i++) {
-        var file = _a[_i];
-        newProject.createSourceFile(file.getFilePath(), file.getFullText());
-    }
-    return newProject;
-}
-function applyFileChange(project, fileChange) {
-    if (fileChange.isNewFile) {
-        var text = singleton(fileChange.textChanges, "Text changes for a new file should only have one change.").newText;
-        project.createSourceFile(fileChange.fileName, text);
-    }
-    else {
-        var file = project.getSourceFileOrThrow(fileChange.fileName);
-        file.applyTextChanges(fileChange.textChanges);
-    }
-}
-function singleton(arr, message) {
-    if (arr.length != 1) {
-        throw new Error("Expected array to have exactly one item, but array has " + arr.length + " items.\n" + (message || ""));
-    }
-    return arr[0];
-}
 if (!module.parent) {
-    perf_hooks_1.performance.mark("start_main_process");
     main();
-    perf_hooks_1.performance.mark("end_main_process");
 }
 //# sourceMappingURL=process.js.map

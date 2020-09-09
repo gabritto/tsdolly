@@ -14,9 +14,10 @@ exports.__esModule = true;
 var yargs = require("yargs");
 var path = require("path");
 var cp = require("child_process");
-var process_1 = require("./process");
-var process_2 = require("process");
+var process_1 = require("process");
 var perf_hooks_1 = require("perf_hooks");
+var process_2 = require("./process");
+var performance_1 = require("./performance");
 var SOLVERS = ["SAT4J", "MiniSat"];
 var JAVA_OPTS = {
     command: {
@@ -42,12 +43,12 @@ var COUNT_OPTS = {
     solver: JAVA_OPTS.solver
 };
 var newProcessOpts = {
-    refactoring: process_1.CLI_OPTIONS.refactoring,
-    applyRefactoring: process_1.CLI_OPTIONS.applyRefactoring,
-    result: process_1.CLI_OPTIONS.result,
-    first: process_1.CLI_OPTIONS.first,
-    skip: process_1.CLI_OPTIONS.skip,
-    performance: process_1.CLI_OPTIONS.performance
+    refactoring: process_2.CLI_OPTIONS.refactoring,
+    applyRefactoring: process_2.CLI_OPTIONS.applyRefactoring,
+    result: process_2.CLI_OPTIONS.result,
+    first: process_2.CLI_OPTIONS.first,
+    skip: process_2.CLI_OPTIONS.skip,
+    performance: process_2.CLI_OPTIONS.performance
 };
 var OPTS = __assign(__assign({}, JAVA_OPTS), newProcessOpts);
 function main() {
@@ -78,8 +79,11 @@ function count(opts) {
     });
 }
 function tsdolly(opts) {
+    if (opts.performance) {
+        performance_1.registerPerformance(opts.performance);
+    }
     var solutionPath = generateSolutions(opts);
-    process_1.process(__assign(__assign({}, opts), { solution: solutionPath }));
+    process_2.process(__assign(__assign({}, opts), { solution: solutionPath }));
 }
 var ROOT_DIR = path.join(path.resolve(__dirname), "..", "..");
 function generateSolutions(opts) {
@@ -93,7 +97,7 @@ function generateSolutions(opts) {
         args.push("--model=\"" + opts.model + "\"");
     }
     if (opts.output) {
-        args.push("--output=\"" + path.resolve(process_2.cwd(), opts.output) + "\"");
+        args.push("--output=\"" + path.resolve(process_1.cwd(), opts.output) + "\"");
     }
     if (opts.solver) {
         args.push("--solver=\"" + opts.solver + "\"");
@@ -108,7 +112,7 @@ function generateSolutions(opts) {
     });
     var solutionsPath;
     if (opts.output) {
-        solutionsPath = path.resolve(process_2.cwd(), opts.output);
+        solutionsPath = path.resolve(process_1.cwd(), opts.output);
     }
     else {
         solutionsPath = path.resolve(path.join(ROOT_DIR, "java"), path.join("..", "solutions", "solutions.json"));
@@ -117,8 +121,6 @@ function generateSolutions(opts) {
     return solutionsPath;
 }
 if (!module.parent) {
-    perf_hooks_1.performance.mark("start_main");
     main();
-    perf_hooks_1.performance.mark("end_main");
 }
 //# sourceMappingURL=main.js.map
