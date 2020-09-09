@@ -220,6 +220,12 @@ fact StringConcatSize {
 	}
 }
 
+fact StringConcatLiteral {
+	all s: StringConcat {
+		some l: StringLiteral | l in s.concat
+	}
+}
+
 sig StringLiteral {}
 
 fact StringLiteralParent {
