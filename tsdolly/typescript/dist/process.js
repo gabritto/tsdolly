@@ -99,25 +99,6 @@ function process(opts) {
         perf_hooks_1.performance.mark("end_process");
         printAggregateResults(processor.getAggregateResults());
         console.log("Results written to " + opts.result);
-        // if (opts.performance) {
-        //     const perfEntries = JSON.stringify(
-        //         performance.getEntries(),
-        //         /* replacer */ undefined,
-        //         /* space */ 4
-        //     );
-        //     try {
-        //         fs.writeFileSync(opts.performance, perfEntries, {
-        //             encoding: "utf-8",
-        //         });
-        //         console.log(
-        //             `Performance entries written to ${opts.performance}`
-        //         );
-        //     } catch (error) {
-        //         console.log(
-        //             `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
-        //         );
-        //     }
-        // }
     });
     if (opts.performance) {
         registerPerformance(opts.performance);
@@ -134,12 +115,12 @@ function registerPerformance(path) {
         console.log("Error " + error + " found while cleaning contents of performance file " + path + ".");
     }
     new perf_hooks_1.PerformanceObserver(function (list, observer) {
-        console.log("Performance list #" + list.getEntries().length);
-        var perfEntries = JSON.stringify(list.getEntries(), 
+        var perfEntries = list.getEntries().map(function (entry) { return JSON.stringify(entry, 
         /* replacer */ undefined, 
-        /* space */ 4);
+        /* space */ 0); });
         try {
-            fs.appendFileSync(path, perfEntries, {
+            // Performance will be a JSONL file
+            fs.appendFileSync(path, "\n" + perfEntries.join("\n"), {
                 encoding: "utf-8"
             });
             console.log("Performance entries appended to " + path);
@@ -147,7 +128,7 @@ function registerPerformance(path) {
         catch (error) {
             console.log("Error " + error + " found while writing performance entries to file " + path + ".\n\tEntries:\n" + perfEntries);
         }
-    }).observe({ entryTypes: ['mark'], buffered: true });
+    }).observe({ entryTypes: ["mark"], buffered: true });
 }
 var Stringer = /** @class */ (function (_super) {
     __extends(Stringer, _super);
@@ -437,6 +418,8 @@ function singleton(arr, message) {
     return arr[0];
 }
 if (!module.parent) {
+    perf_hooks_1.performance.mark("start_main_process");
     main();
+    perf_hooks_1.performance.mark("end_main_process");
 }
 //# sourceMappingURL=process.js.map

@@ -116,26 +116,6 @@ export function process(opts: CliOpts): void {
         printAggregateResults(processor.getAggregateResults());
 
         console.log(`Results written to ${opts.result}`);
-
-        // if (opts.performance) {
-        //     const perfEntries = JSON.stringify(
-        //         performance.getEntries(),
-        //         /* replacer */ undefined,
-        //         /* space */ 4
-        //     );
-        //     try {
-        //         fs.writeFileSync(opts.performance, perfEntries, {
-        //             encoding: "utf-8",
-        //         });
-        //         console.log(
-        //             `Performance entries written to ${opts.performance}`
-        //         );
-        //     } catch (error) {
-        //         console.log(
-        //             `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
-        //         );
-        //     }
-        // }
     });
 
     if (opts.performance) {
@@ -155,14 +135,14 @@ function registerPerformance(path: string): void {
     }
 
     new PerformanceObserver((list, observer) => {
-        console.log("Performance list #" + list.getEntries().length);
-        const perfEntries = JSON.stringify(
-            list.getEntries(),
-            /* replacer */ undefined,
-            /* space */ 4
-        );
+        const perfEntries = list
+            .getEntries()
+            .map((entry) =>
+                JSON.stringify(entry, /* replacer */ undefined, /* space */ 0)
+            );
         try {
-            fs.appendFileSync(path, perfEntries, {
+            // Performance will be a JSONL file
+            fs.appendFileSync(path, "\n" + perfEntries.join("\n"), {
                 encoding: "utf-8",
             });
             console.log(`Performance entries appended to ${path}`);
@@ -645,5 +625,7 @@ ${message || ""}`);
 }
 
 if (!module.parent) {
+    performance.mark("start_main_process");
     main();
+    performance.mark("end_main_process");
 }

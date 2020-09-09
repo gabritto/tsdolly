@@ -153,5 +153,7 @@ function generateSolutions(opts: JavaOpts): string {
 }
 
 if (!module.parent) {
+    performance.mark("start_main");
     main();
+    performance.mark("end_main");
 }

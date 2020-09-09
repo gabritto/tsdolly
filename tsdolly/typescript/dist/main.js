@@ -117,6 +117,8 @@ function generateSolutions(opts) {
     return solutionsPath;
 }
 if (!module.parent) {
+    perf_hooks_1.performance.mark("start_main");
     main();
+    perf_hooks_1.performance.mark("end_main");
 }
 //# sourceMappingURL=main.js.map
