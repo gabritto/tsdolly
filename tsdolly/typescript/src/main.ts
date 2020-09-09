@@ -2,13 +2,15 @@ import yargs = require("yargs");
 import path = require("path");
 import cp = require("child_process");
 
+import { cwd } from "process";
+import { performance } from "perf_hooks";
+
 import {
     process,
     CliOpts as ProcessOpts,
     CLI_OPTIONS as PROCESS_OPTS,
 } from "./process";
-import { cwd } from "process";
-import { performance } from "perf_hooks";
+import { registerPerformance } from "./performance";
 
 type Solver = "SAT4J" | "MiniSat";
 const SOLVERS: Solver[] = ["SAT4J", "MiniSat"];
@@ -102,6 +104,10 @@ function count(opts: Omit<JavaOpts, "output">): void {
 }
 
 function tsdolly(opts: JavaOpts & NewProcessOpts): void {
+    if (opts.performance) {
+        registerPerformance(opts.performance);
+    }
+
     const solutionPath = generateSolutions(opts);
     process({ ...opts, solution: solutionPath });
 }
