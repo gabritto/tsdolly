@@ -267,10 +267,10 @@ run ConvertToTemplateString for 2
 	Refactoring: Generate 'get' and 'set' accessors.
 	Condition: there should be a class with at least one field.
 */
-pred GenerateGetAndSetAccessor {
+pred GenerateGetAndSetAccessors {
 	some c: ClassDecl | #c.fields > 0
 }
-run GenerateGetAndSetAccessor for 2
+run GenerateGetAndSetAccessors for 2
 
 /*
 	Refactoring: Extract Symbol.
