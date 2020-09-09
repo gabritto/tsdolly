@@ -20,7 +20,6 @@ var Ajv = require("ajv");
 var _ = require("lodash");
 var path = require("path");
 var StreamArray = require("stream-json/streamers/StreamArray");
-// import Chain = require('stream-chain');
 var perf_hooks_1 = require("perf_hooks");
 var ts_morph_1 = require("ts-morph");
 var console_1 = require("console");
@@ -100,23 +99,56 @@ function process(opts) {
         perf_hooks_1.performance.mark("end_process");
         printAggregateResults(processor.getAggregateResults());
         console.log("Results written to " + opts.result);
-        if (opts.performance) {
-            var perfEntries = JSON.stringify(perf_hooks_1.performance.getEntries(), 
-            /* replacer */ undefined, 
-            /* space */ 4);
-            try {
-                fs.writeFileSync(opts.performance, perfEntries, {
-                    encoding: "utf-8"
-                });
-                console.log("Performance entries written to " + opts.performance);
-            }
-            catch (error) {
-                console.log("Error " + error + " found while writing performance entries to file " + opts.performance + ".\n\tEntries:\n" + perfEntries);
-            }
-        }
+        // if (opts.performance) {
+        //     const perfEntries = JSON.stringify(
+        //         performance.getEntries(),
+        //         /* replacer */ undefined,
+        //         /* space */ 4
+        //     );
+        //     try {
+        //         fs.writeFileSync(opts.performance, perfEntries, {
+        //             encoding: "utf-8",
+        //         });
+        //         console.log(
+        //             `Performance entries written to ${opts.performance}`
+        //         );
+        //     } catch (error) {
+        //         console.log(
+        //             `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
+        //         );
+        //     }
+        // }
     });
+    if (opts.performance) {
+        registerPerformance(opts.performance);
+    }
 }
 exports.process = process;
+function registerPerformance(path) {
+    try {
+        fs.writeFileSync(path, "", {
+            encoding: "utf-8"
+        });
+    }
+    catch (error) {
+        console.log("Error " + error + " found while cleaning contents of performance file " + path + ".");
+    }
+    new perf_hooks_1.PerformanceObserver(function (list, observer) {
+        console.log("Performance list #" + list.getEntries().length);
+        var perfEntries = JSON.stringify(list.getEntries(), 
+        /* replacer */ undefined, 
+        /* space */ 4);
+        try {
+            fs.appendFileSync(path, perfEntries, {
+                encoding: "utf-8"
+            });
+            console.log("Performance entries appended to " + path);
+        }
+        catch (error) {
+            console.log("Error " + error + " found while writing performance entries to file " + path + ".\n\tEntries:\n" + perfEntries);
+        }
+    }).observe({ entryTypes: ['mark'], buffered: true });
+}
 var Stringer = /** @class */ (function (_super) {
     __extends(Stringer, _super);
     function Stringer() {
@@ -197,7 +229,8 @@ var Processor = /** @class */ (function (_super) {
         if (this.opts.skip) {
             var chunkSize = this.opts.skip;
             if (this.solutionCount % chunkSize === 0) {
-                this.nextSample = _.random(0, chunkSize - 1, false) + this.solutionCount;
+                this.nextSample =
+                    _.random(0, chunkSize - 1, false) + this.solutionCount;
             }
             return this.nextSample === this.solutionCount;
         }
@@ -300,7 +333,7 @@ var REFACTOR_TO_PRED = new Map([
     [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
 function isStringConcat(node) {
-    return ts_morph_1.ts.isBinaryExpression(node); // TODO: should we add more checks to this?
+    return ts_morph_1.ts.isStringLiteral(node) && ts_morph_1.ts.isBinaryExpression(node.parent);
 }
 function isParameter(node) {
     return ts_morph_1.ts.isParameter(node);

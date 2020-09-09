@@ -4,9 +4,8 @@ import Ajv = require("ajv");
 import _ = require("lodash");
 import path = require("path");
 import StreamArray = require("stream-json/streamers/StreamArray");
-// import Chain = require('stream-chain');
 
-import { performance } from "perf_hooks";
+import { performance, PerformanceObserver } from "perf_hooks";
 import { Project, ts, Diagnostic as TsDiagnostic } from "ts-morph";
 import { assert } from "console";
 import { Transform, TransformCallback, pipeline, finished } from "stream";
@@ -118,26 +117,61 @@ export function process(opts: CliOpts): void {
 
         console.log(`Results written to ${opts.result}`);
 
-        if (opts.performance) {
-            const perfEntries = JSON.stringify(
-                performance.getEntries(),
-                /* replacer */ undefined,
-                /* space */ 4
-            );
-            try {
-                fs.writeFileSync(opts.performance, perfEntries, {
-                    encoding: "utf-8",
-                });
-                console.log(
-                    `Performance entries written to ${opts.performance}`
-                );
-            } catch (error) {
-                console.log(
-                    `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
-                );
-            }
-        }
+        // if (opts.performance) {
+        //     const perfEntries = JSON.stringify(
+        //         performance.getEntries(),
+        //         /* replacer */ undefined,
+        //         /* space */ 4
+        //     );
+        //     try {
+        //         fs.writeFileSync(opts.performance, perfEntries, {
+        //             encoding: "utf-8",
+        //         });
+        //         console.log(
+        //             `Performance entries written to ${opts.performance}`
+        //         );
+        //     } catch (error) {
+        //         console.log(
+        //             `Error ${error} found while writing performance entries to file ${opts.performance}.\n\tEntries:\n${perfEntries}`
+        //         );
+        //     }
+        // }
     });
+
+    if (opts.performance) {
+        registerPerformance(opts.performance);
+    }
+}
+
+function registerPerformance(path: string): void {
+    try {
+        fs.writeFileSync(path, "", {
+            encoding: "utf-8",
+        });
+    } catch (error) {
+        console.log(
+            `Error ${error} found while cleaning contents of performance file ${path}.`
+        );
+    }
+
+    new PerformanceObserver((list, observer) => {
+        console.log("Performance list #" + list.getEntries().length);
+        const perfEntries = JSON.stringify(
+            list.getEntries(),
+            /* replacer */ undefined,
+            /* space */ 4
+        );
+        try {
+            fs.appendFileSync(path, perfEntries, {
+                encoding: "utf-8",
+            });
+            console.log(`Performance entries appended to ${path}`);
+        } catch (error) {
+            console.log(
+                `Error ${error} found while writing performance entries to file ${path}.\n\tEntries:\n${perfEntries}`
+            );
+        }
+    }).observe({ entryTypes: ["mark"], buffered: true });
 }
 
 class Stringer extends Transform {
@@ -440,7 +474,7 @@ const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
 ]);
 
 function isStringConcat(node: ts.Node) {
-    return ts.isBinaryExpression(node); // TODO: should we add more checks to this?
+    return ts.isStringLiteral(node) && ts.isBinaryExpression(node.parent);
 }
 
 function isParameter(node: ts.Node) {
