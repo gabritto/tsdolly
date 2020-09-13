@@ -21,6 +21,9 @@ exports.REFACTOR_TO_PRED = new Map([
     [Refactoring.ExtractSymbol, isCallOrLiteral],
     [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
+var USER_PREFERENCES = {
+    allowTextChangesInNewFiles: true
+};
 function isStringConcat(node) {
     return ts_morph_1.ts.isStringLiteral(node) && ts_morph_1.ts.isBinaryExpression(node.parent);
 }
@@ -78,15 +81,13 @@ function getRefactorInfo(project, program, file, applyRefactoring, enabledRefact
 exports.getRefactorInfo = getRefactorInfo;
 function getApplicableRefactors(project, node) {
     var languageService = project.getLanguageService().compilerObject;
-    return languageService.getApplicableRefactors(node.getSourceFile().fileName, node, 
-    /* preferences */ undefined);
+    return languageService.getApplicableRefactors(node.getSourceFile().fileName, node, USER_PREFERENCES);
 }
 function getEditInfo(project, node, refactorName, actionName) {
     var languageService = project.getLanguageService().compilerObject;
     var formatSettings = project.manipulationSettings.getFormatCodeSettings();
     var editInfo = languageService.getEditsForRefactor(node.getSourceFile().fileName, 
-    /* formatOptions */ formatSettings, node, refactorName, actionName, 
-    /* preferences */ undefined);
+    /* formatOptions */ formatSettings, node, refactorName, actionName, USER_PREFERENCES);
     console_1.assert((editInfo === null || editInfo === void 0 ? void 0 : editInfo.commands) === undefined, "We cannot deal with refactorings which include commands.");
     return editInfo;
 }

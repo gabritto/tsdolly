@@ -33,6 +33,10 @@ export const REFACTOR_TO_PRED: Map<Refactoring, NodePredicate> = new Map([
     [Refactoring.MoveToNewFile, isTopLevelDeclaration],
 ]);
 
+const USER_PREFERENCES = {
+    allowTextChangesInNewFiles: true,
+};
+
 function isStringConcat(node: ts.Node) {
     return ts.isStringLiteral(node) && ts.isBinaryExpression(node.parent);
 }
@@ -121,7 +125,7 @@ function getApplicableRefactors(
     return languageService.getApplicableRefactors(
         node.getSourceFile().fileName,
         node,
-        /* preferences */ undefined
+        USER_PREFERENCES
     );
 }
 
@@ -139,7 +143,7 @@ function getEditInfo(
         node,
         refactorName,
         actionName,
-        /* preferences */ undefined
+        USER_PREFERENCES
     );
     assert(
         editInfo?.commands === undefined,
