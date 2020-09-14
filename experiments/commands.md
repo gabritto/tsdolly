@@ -109,17 +109,17 @@
         ```
         Total programs: 499038  
         Total programs sampled and analyzed: 9981  
-        Total programs that compile: 9763  
-        Compiling rate: 97.81585011521892%  
-        Programs that can be refactored (refactorable): 0
-        Refactorable rate: 0%
+        Total programs that compile: 9761  
+        Compiling rate: 97.79581204288148%  
+        Programs that can be refactored (refactorable): 9981  
+        Refactorable rate: 100%  
 
-        Results written to ../experiments/logs/moveToNewFile50.json
-        Performance entries appended to ../experiments/logs/perf_moveToNewFile50.json
+        Results written to ../experiments/logs/moveToNewFile50.json  
+        Performance entries appended to ../experiments/logs/perf_moveToNewFile50.json  
 
-        real    296m13.428s
-        user    382m51.453s
-        sys     35m11.875s
+        real    642m30.743s  
+        user    756m29.703s  
+        sys     120m31.188s  
 
 - Convert parameters to destructured object:
 
