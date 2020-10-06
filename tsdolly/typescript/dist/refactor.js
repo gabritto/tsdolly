@@ -34,10 +34,13 @@ function isField(node) {
     return ts_morph_1.ts.isPropertyDeclaration(node);
 }
 function isCallOrLiteral(node) {
-    return ts_morph_1.ts.isCallExpression(node) || ts_morph_1.ts.isLiteralExpression(node) || isFieldAccess(node);
+    return (ts_morph_1.ts.isCallExpression(node) ||
+        ts_morph_1.ts.isLiteralExpression(node) ||
+        isFieldAccess(node));
 }
 function isFieldAccess(node) {
-    return ts_morph_1.ts.isPropertyAccessExpression(node) && (node.expression.kind === ts_morph_1.ts.SyntaxKind.ThisKeyword);
+    return (ts_morph_1.ts.isPropertyAccessExpression(node) &&
+        node.expression.kind === ts_morph_1.ts.SyntaxKind.ThisKeyword);
 }
 function isTopLevelDeclaration(node) {
     return ts_morph_1.ts.isFunctionDeclaration(node) || ts_morph_1.ts.isClassDeclaration(node);
