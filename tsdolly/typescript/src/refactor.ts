@@ -50,7 +50,18 @@ function isField(node: ts.Node) {
 }
 
 function isCallOrLiteral(node: ts.Node) {
-    return ts.isCallExpression(node) || ts.isLiteralExpression(node);
+    return (
+        ts.isCallExpression(node) ||
+        ts.isLiteralExpression(node) ||
+        isFieldAccess(node)
+    );
+}
+
+function isFieldAccess(node: ts.Node) {
+    return (
+        ts.isPropertyAccessExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ThisKeyword
+    );
 }
 
 function isTopLevelDeclaration(node: ts.Node) {
