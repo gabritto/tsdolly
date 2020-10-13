@@ -90,8 +90,8 @@ fact MethodDeclUniqueName {
 -- The fact below is an approximation of that.
 fact MethodDeclOverriding {
 	all disj m1, m2: MethodDecl | m1.name = m2.name and m2.~methods in m1.~methods.^extend implies {
-		m1.parameters.type = m2.parameters.type
-		#m1.parameters = #m1.parameters
+		(m1.parameters.type in m2.parameters.type)
+		#m1.parameters <= #m1.parameters
 	}
 }
 
@@ -131,9 +131,6 @@ fact ExpressionParent {
 	all e: Expression {
 		one parent: Expression + Block { 
 			(e in parent.expression)
-			// or (e in parent.left)
-			// or (e in parent.right)
-			// or (e in parent.arguments)
 			or (e in parent.(FunctionCall <: arguments))
 			or (e in parent.(FunctionCall <: arguments))
 			or (e in parent.concat)
