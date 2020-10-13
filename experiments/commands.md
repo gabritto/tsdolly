@@ -15,22 +15,19 @@
         ```sh
         time node typescript/dist/process.js --solution=../experiments/solutions/convertToTemplateString.json --result=../experiments/logs/convertToTemplateString50.json --refactoring="Convert to template string" --skip=50 --performance=../experiments/logs/perf_convertToTemplateString50.json
         ```
-        Total programs: 239399  
-        Total programs sampled and analyzed: 4788  
-        Total programs that compile: 4757  
-        Compiling rate: 99.35254803675856%  
-        Programs that can be refactored (refactorable): 4788  
-        Refactorable rate: 100%  
+        Total programs: 239399
+        Total programs sampled and analyzed: 4788
+        Total programs that compile: 4748
+        Compiling rate: 99.16457811194654%
+        Programs that can be refactored (refactorable): 4788
+        Refactorable rate: 100%
 
         Results written to ../experiments/logs/convertToTemplateString50.json
-        Performance entries appended to ../experiments/logs/perf_convertToTemplateString50.json  
+        Performance entries appended to ../experiments/logs/perf_convertToTemplateString50.json
 
-        time  
-        real    222m27.548s  
-        user    263m40.172s  
-        sys     40m53.266s  
-
-        Average time per program: 2.8 seconds
+        real    359m1.782s
+        user    411m42.859s
+        sys     35m13.672s
 
     + Test Skip 25:
         ```sh
@@ -67,35 +64,34 @@
         ```
         Total programs: 406096  
         Total programs sampled and analyzed: 8122  
-        Total programs that compile: 7899  
-        Compiling rate: 97.25437084461956%  
-        Programs that can be refactored (refactorable): 5750  
-        Refactorable rate: 70.79537059837479% 
+        Total programs that compile: 7935  
+        Compiling rate: 97.6976114257572%  
+        Programs that can be refactored (refactorable): 8122  
+        Refactorable rate: 100%  
 
         Results written to ../experiments/logs/extractSymbol50.json  
-        Performance entries appended to ../experiments/logs/perf_extractSymbol50.json
+        Performance entries appended to ../experiments/logs/perf_extractSymbol50.json  
 
-        real    1316m38.076s  
-        user    1530m51.469s  
-        sys     208m45.172s  
+        real    1767m33.366s  
+        user    2049m46.063s  
+        sys     279m41.172s  
     
     + Test Skip 25:
         ```sh
         time node typescript/dist/process.js --solution=../experiments/solutions/extractSymbol.json --result=../experiments/logs/extractSymbol25.json --refactoring="Extract Symbol" --skip=25 --performance=../experiments/logs/perf_extractSymbol25.json
         ```
-        Total programs: 406096  
-        Total programs sampled and analyzed: 16244  
-        Total programs that compile: 15838  
-        Compiling rate: 97.50061561191825%  
-        Programs that can be refactored (refactorable): 11520  
-        Refactorable rate: 70.91849298202413%  
+        Total programs sampled and analyzed: 16244
+        Total programs that compile: 15854
+        Compiling rate: 97.59911351883773%
+        Programs that can be refactored (refactorable): 16244
+        Refactorable rate: 100%
 
-        Results written to ../experiments/logs/extractSymbol25.json  
-        Performance entries appended to ../experiments/logs/perf_extractSymbol25.json  
+        Results written to ../experiments/logs/extractSymbol25.json
+        Performance entries appended to ../experiments/logs/perf_extractSymbol25.json
 
-        real    3080m48.086s  
-        user    3532m43.141s  
-        sys     379m58.141s  
+        real    3572m26.576s
+        user    4144m10.375s
+        sys     477m12.125s
 
 - Generate 'get' and 'set' accessors:
 
@@ -161,17 +157,17 @@
         ```
         Total programs: 499038  
         Total programs sampled and analyzed: 9981  
-        Total programs that compile: 9761  
-        Compiling rate: 97.79581204288148%  
+        Total programs that compile: 9755  
+        Compiling rate: 97.73569782586915%  
         Programs that can be refactored (refactorable): 9981  
         Refactorable rate: 100%  
 
         Results written to ../experiments/logs/moveToNewFile50.json  
         Performance entries appended to ../experiments/logs/perf_moveToNewFile50.json  
 
-        real    642m30.743s  
-        user    756m29.703s  
-        sys     120m31.188s  
+        real    892m54.385s  
+        user    1028m34.844s  
+        sys     109m17.266s  
 
     + Test Skip 25:
         ```sh
@@ -206,19 +202,19 @@
         ```sh
         time node typescript/dist/process.js --solution=../experiments/solutions/convertParams.json --result=../experiments/logs/convertParams50.json --refactoring="Convert parameters to destructured object" --skip=50 --performance=../experiments/logs/perf_convertParams50.json
         ```
-        Total programs: 315310  
-        Total programs sampled and analyzed: 6306  
-        Total programs that compile: 6177  
-        Compiling rate: 97.95432921027593%  
-        Programs that can be refactored (refactorable): 6306  
-        Refactorable rate: 100%  
+        Total programs: 315310
+        Total programs sampled and analyzed: 6306
+        Total programs that compile: 6183
+        Compiling rate: 98.04947668886774%
+        Programs that can be refactored (refactorable): 6306
+        Refactorable rate: 100%
 
         Results written to ../experiments/logs/convertParams50.json
         Performance entries appended to ../experiments/logs/perf_convertParams50.json
 
-        real    316m19.076s  
-        user    373m13.672s  
-        sys     58m17.703s  
+        real    493m23.515s
+        user    566m34.391s
+        sys     51m25.531s
 
     + Test Skip 25:
         ```sh
